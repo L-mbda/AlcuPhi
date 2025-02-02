@@ -29,7 +29,10 @@ export default function App() {
         <footer className="justify-center flex bottom-4 fixed w-full">
           <p>
             ©{new Date().getFullYear()}{" "}
-            <Link href={"https://github.com/alcuphi"} className="underline">
+            <Link
+              href={"https://github.com/alcuphi/alcuphi"}
+              className="underline"
+            >
               Alcuphi
             </Link>
             . Open source under the CC0-1.0 Universal License.
