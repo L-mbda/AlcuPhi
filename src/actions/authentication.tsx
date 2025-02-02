@@ -180,7 +180,9 @@ export class Authentication {
         if (userAccount.length != 0) {
           return { action: "continue", credentials: userAccount[0] };
         }
-      } catch {}
+      } catch (e) {
+        console.error(e);
+      }
     }
     return { action: "logout" };
   }
