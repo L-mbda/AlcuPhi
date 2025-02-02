@@ -28,7 +28,7 @@ export class Authentication {
       .createHash("sha3-512")
       .update(salt1 + password + salt2)
       .digest("hex");
-    if ((await (await db()).select().from(user)).length == 0) {
+    if ((await (await db()).select().from(user)).length != 0) {
       await (await db()).insert(user).values({
         // @ts-expect-error I would say expect because overload issues lmao
         name: data.get("name"),
