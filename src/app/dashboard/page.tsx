@@ -16,8 +16,9 @@ export default async function Dashboard() {
       </div>
 
       {/* Regular UI */}
-      <div>
-        <h1 className="font-black text-5xl">Welcome back, {session?.name}!</h1>
+      <div className="p-8 w-full bg-zinc-900">
+        <h1 className="font-black text-5xl">Welcome, {session?.name}!</h1>
+        <p>What would you like to do today?</p>
       </div>
     </div>
   );

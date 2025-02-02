@@ -1,15 +1,10 @@
 import { Authentication } from "@/actions/authentication";
 import { Button, PasswordInput, TextInput } from "@mantine/core";
-import { SearchParams } from "next/dist/server/request/search-params";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function SignIn({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
+export default async function SignIn({ searchParams }: { searchParams: any }) {
   // Check if there is token and redirect
   if ((await cookies()).get("header") !== undefined) {
     redirect("/dashboard");
