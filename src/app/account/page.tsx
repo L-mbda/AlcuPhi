@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function SignIn({ searchParams }: { searchParams: any }) {
   // Check if there is token and redirect
   if ((await cookies()).get("header") !== undefined) {
