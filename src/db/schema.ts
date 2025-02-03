@@ -13,7 +13,7 @@ export const user = pgTable("users", {
 
 // Session :)
 export const session = pgTable("session", {
-  id: integer().generatedAlwaysAsIdentity(),
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
   token: varchar().notNull(),
   userID: integer(),
   expirationTime: varchar().notNull(),
