@@ -1,7 +1,8 @@
-import { DropdownMenu } from "@/lib/menu";
+import { DropdownMenu, GameCard } from "@/lib/menu";
 import { getSessionData } from "@/lib/session";
 import { SplashScreen } from "@/lib/ui";
-import { BlocksIcon } from "lucide-react";
+import { Search } from "lucide-react";
+import Link from "next/link";
 
 // Dashboard
 export default async function Dashboard() {
@@ -22,10 +23,17 @@ export default async function Dashboard() {
         <p>What would you like to practice today?</p>
       </div>
       {/* Play and other options */}
-      <div>
-        <h1>
-          <BlocksIcon /> Community
-        </h1>
+      <div className="w-full bg-zinc-900 pl-10 gap-3 flex flex-col">
+        <h1 className="font-light text-3xl flex flex-row gap-3 items-center"><span><Search size={30} /></span>Explore</h1>
+        {/* Div for game modes */}
+        <div className="p-4">
+          <h1 className="font-semibold w-fit bg-gray-50 hover:bg-gray-100 transition-colors duration-300 p-3 rounded-lg text-gray-900 font-mono flex items-center gap-3 shadow-md">
+            PLATFORM ORIGINALS
+          </h1>
+          <div className="font-['Mulish'] mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <GameCard />                      
+          </div>
+        </div>
       </div>
     </div>
   );

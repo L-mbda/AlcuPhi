@@ -19,3 +19,10 @@ export const session = pgTable("session", {
   expirationTime: varchar().notNull(),
   expired: boolean().notNull().default(false),
 });
+
+export const questionBank = pgTable("questionBank", {
+  id: integer().generatedAlwaysAsIdentity().primaryKey(),
+  name: varchar().notNull(),
+  content: varchar().notNull(),
+  creator: varchar(),
+})
