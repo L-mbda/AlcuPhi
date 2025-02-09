@@ -173,6 +173,7 @@ export class Authentication {
             email: user.email,
             role: user.role,
             name: user.name,
+            id: user.id,
           })
           .from(user)
           // @ts-expect-error since it is a file that needs it because of the eq() operator.

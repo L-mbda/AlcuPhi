@@ -5,7 +5,6 @@ import "@mantine/core/styles.css";
 import { MantineProvider } from "@mantine/core";
 import { redirect } from "next/navigation";
 import { getSessionData } from "@/lib/session";
-
 export const metadata: Metadata = {
   title: "Alcuphi",
   description: "Alcumus for us Physicists ⚛",

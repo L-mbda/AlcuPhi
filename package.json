@@ -14,6 +14,7 @@
     "@icons-pack/react-simple-icons": "^10.2.0",
     "@mantine/core": "^7.16.1",
     "@mantine/hooks": "^7.16.1",
+    "better-react-mathjax": "^2.1.0",
     "dotenv": "^16.4.7",
     "drizzle-kit": "^0.30.2",
     "drizzle-orm": "^0.38.4",
