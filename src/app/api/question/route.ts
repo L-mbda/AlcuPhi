@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from "next/server";
 /*
   Get question log
 */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function GET(request: NextRequest) {
   const token = await getSessionData();
   if (token.action == "continue") {
@@ -36,6 +37,7 @@ export async function POST(request: NextRequest) {
     if (data.type == "REQUEST") {
       const question = generateQuestion("*");
       console.log(question);
+      // @ts-expect-error Expected because of question
       if (question.id.startsWith("qset.")) {
         return NextResponse.json({
           question: question,

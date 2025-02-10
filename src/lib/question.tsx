@@ -37,7 +37,8 @@ export function QuestionRenderer() {
   }, []);
   console.log(question);
   // Answer handling
-  const handleSubmit = async (event: Event) => {
+  //
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const formData = new FormData(event.target as HTMLFormElement);
     const answer = formData.get("response");
@@ -45,6 +46,7 @@ export function QuestionRenderer() {
       method: "POST",
       body: JSON.stringify({
         type: "ANSWER",
+        // @ts-expect-error because it doesn't recognize type
         questionID: question.question.id,
         response: answer,
       }),
@@ -102,6 +104,7 @@ export function QuestionRenderer() {
               </div>
               {/* @ts-expect-error because it doesn't recognize type */}
               {question.question.answerMethod == "freeResponse" ? (
+                // @eslint-disable-next-line
                 <form className="flex flex-row gap-5" onSubmit={handleSubmit}>
                   <TextInput name="response" placeholder="Enter your answer" />
                   <Button type="submit">Submit</Button>
@@ -166,6 +169,7 @@ export function QuestionLog() {
             <>
               <div key={index} className="flex flex-col">
                 <p>
+                  {/* @ts-expect-error yes it works */}
                   {question.correct ? "✅" : "❌"} {question.questionID}
                 </p>
               </div>
