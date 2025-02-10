@@ -10,6 +10,10 @@ import * as fs from "fs";
 export function generateQuestion(type: string) {
   // Get working directory
   const cwd = process.cwd();
+  // Find all files in the working directory
+  for (const file of fs.readdirSync(cwd)) {
+    console.log(file);
+  }
   console.log(cwd);
   // Read each type of question
   // Check all question sets
