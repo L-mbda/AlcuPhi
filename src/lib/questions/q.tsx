@@ -8,6 +8,9 @@ import * as fs from "fs";
   Generate the question with an algorithm based on type and user score, will work on that later
 */
 export function generateQuestion(type: string) {
+  // Get working directory
+  const cwd = process.cwd();
+  console.log(cwd);
   // Read each type of question
   // Check all question sets
   for (const file of fs.readdirSync("./questions")) {
