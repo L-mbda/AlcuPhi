@@ -1,8 +1,5 @@
 // app/layout.tsx
 import type { Metadata } from "next";
-import "@/app/globals.css";
-import "@mantine/core/styles.css";
-import { MantineProvider } from "@mantine/core";
 import { redirect } from "next/navigation";
 import { getSessionData } from "@/lib/session";
 export const metadata: Metadata = {
@@ -23,7 +20,7 @@ export default async function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased text-white">
-        <MantineProvider>{children}</MantineProvider>
+        {children}
       </body>
     </html>
   );

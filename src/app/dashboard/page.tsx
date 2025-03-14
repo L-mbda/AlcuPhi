@@ -1,4 +1,4 @@
-import { DropdownMenu } from "@/lib/menu";
+import { Dropdown } from "@/lib/menu";
 import { getSessionData } from "@/lib/session";
 import { SplashScreen } from "@/lib/ui";
 import { Search } from "lucide-react";
@@ -12,7 +12,7 @@ export default async function Dashboard() {
       {/* For the top menu */}
       <div className="w-[100%] flex justify-center p-3 items-center gap-6">
         <div className="font-['STRIX'] text-3xl underline hover:cursor-pointer select-none">
-          <DropdownMenu />
+          <Dropdown />
         </div>
         <SplashScreen />
       </div>

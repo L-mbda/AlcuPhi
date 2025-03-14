@@ -1,7 +1,5 @@
 import type { Metadata } from "next";
 import "@/app/globals.css";
-import "@mantine/core/styles.css";
-import { MantineProvider } from "@mantine/core";
 
 export const metadata: Metadata = {
   title: "AlcuPhi",
@@ -16,7 +14,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`antialiased text-white`}>
-        <MantineProvider>{children}</MantineProvider>
+        {children}
       </body>
     </html>
   );

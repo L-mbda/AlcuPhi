@@ -1,10 +1,10 @@
-import { Button } from "@mantine/core";
+import { Button } from "@/components/ui/button";
 import Link from "next/link";
 
 export default function App() {
   return (
     <>
-      <div className="absolute bg-zinc-900 w-full h-full justify-center flex flex-col">
+      <div className="absolute bg-zinc-950 w-full h-full justify-center flex flex-col">
         <div className="items-center flex flex-col gap-5">
           <div className="text-center">
             <h1 className="font-['STIX'] font-extrabold text-8xl">alcuφ</h1>
@@ -21,8 +21,10 @@ export default function App() {
             </p>
           </div>
           <div>
-            <Button component={Link} href="/account" color="gray">
-              Get Started
+            <Button className="bg-zinc-800" asChild>
+              <Link href={'/account'}>
+                Get Started
+              </Link>
             </Button>
           </div>
         </div>

@@ -1,8 +1,9 @@
 import { Authentication } from "@/actions/authentication";
-import { Button, PasswordInput, TextInput } from "@mantine/core";
 import { cookies } from "next/headers";
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import {Input} from "@/components/ui/input"
+import { Button } from "@/components/ui/button";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default async function SignIn({ searchParams }: { searchParams: any }) {
@@ -30,24 +31,32 @@ export default async function SignIn({ searchParams }: { searchParams: any }) {
             {/* Error message */}
             <p className="text-red-400">{message}</p>
           </div>
-          <div>
-            <TextInput name="name" label="Name" placeholder="Lambda" required />
-            <TextInput
-              type="email"
-              name="email"
-              label="Email"
-              placeholder="hello@alcuphi.me"
-              required
-            />
-            <PasswordInput
-              name="password"
-              label="Password"
-              placeholder="********"
-              required
-            />
+          <div className="gap-3 flex flex-col">
+            <div>
+              <label htmlFor="name">Name:</label>
+              <Input name="name" placeholder="Lambda" required />
+            </div>
+            <div>
+              <label htmlFor="name">Email:</label>
+              <Input
+                type="email"
+                name="email"
+                placeholder="hello@alcuphi.me"
+                required
+              />
+            </div>
+            <div>
+              <label htmlFor="name">Password:</label>
+              <Input
+                name="password"
+                placeholder="********"
+                type="password"
+                required
+              />
+            </div>
           </div>
           <div className="flex flex-col gap-2">
-            <Button type="submit">Sign Up</Button>
+            <Button type="submit" className="bg-zinc-800">Sign Up</Button>
             <Link className="underline" href={"/account"}>
               Have an account?
             </Link>
@@ -70,23 +79,22 @@ export default async function SignIn({ searchParams }: { searchParams: any }) {
           {/* Error message */}
           <p className="text-red-400">{message}</p>
         </div>
-        <div>
-          <TextInput
+        <div className="gap-3 flex flex-col">
+          <Input
             type="email"
             name="email"
-            label="Email"
             placeholder="hello@alcuphi.me"
             required
           />
-          <PasswordInput
+          <Input
             name="password"
-            label="Password"
+            type="password"
             placeholder="********"
             required
           />
         </div>
         <div className="flex flex-col gap-2">
-          <Button type="submit">Login</Button>
+          <Button type="submit" className="bg-zinc-800">Login</Button>
           <Link className="underline" href={"?action=register"}>
             Don&apos;t have an account?
           </Link>
