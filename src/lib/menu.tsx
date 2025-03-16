@@ -1,5 +1,14 @@
 "use client";
 
+import { Button } from "@/components/ui/button";
+import {
+  DialogContent,
+  DialogTrigger,
+  Dialog,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,5 +69,26 @@ export function Dropdown() {
     //     </NavigationMenuItem>
     //   </NavigationMenuList>
     // </NavigationMenu>
+  );
+}
+
+export function CreateSetButton() {
+  return (
+    <>
+      <Dialog>
+        <DialogTrigger asChild>
+          <Button variant="default">Create Set</Button>
+        </DialogTrigger>
+        <DialogContent className="sm:max-w-[425px] bg-zinc-800 border-0">
+          <DialogHeader>
+            <DialogTitle>Create Set</DialogTitle>
+            <DialogDescription>
+              Creating a set allows others to practice with and be enriched by
+              the questions you create.
+            </DialogDescription>
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
