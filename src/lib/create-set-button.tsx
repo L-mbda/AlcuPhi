@@ -16,7 +16,6 @@ import { Button } from "@/components/ui/button";
 import { Alert } from "@/components/ui/alert";
 import Link from "next/link";
 import {
-  Newspaper,
   AlertCircle,
   CirclePlus,
   Sparkles,

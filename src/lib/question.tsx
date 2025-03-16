@@ -1,7 +1,6 @@
 "use client";
 
 import { MathJax, MathJaxContext } from "better-react-mathjax";
-import { Button, TextInput } from "@mantine/core";
 import React, { useEffect, useState, useRef } from "react";
 
 // Interface
@@ -105,10 +104,10 @@ export function QuestionRenderer() {
               {/* @ts-expect-error because it doesn't recognize type */}
               {question.question.answerMethod == "freeResponse" ? (
                 // @eslint-disable-next-line
-                <form className="flex flex-row gap-5" onSubmit={handleSubmit}>
-                  <TextInput name="response" placeholder="Enter your answer" />
-                  <Button type="submit">Submit</Button>
-                </form>
+                <form
+                  className="flex flex-row gap-5"
+                  onSubmit={handleSubmit}
+                ></form>
               ) : null}
             </>
           ) : (
