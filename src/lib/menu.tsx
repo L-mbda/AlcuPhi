@@ -1,7 +1,5 @@
-"use client"
+"use client";
 
-import { LogOut } from "lucide-react"
-import Link from "next/link"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,22 +7,36 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-
+} from "@/components/ui/dropdown-menu";
+import { LogOut, Settings } from "lucide-react";
+import Link from "next/link";
 
 export function Dropdown() {
   return (
     <DropdownMenu>
-  <DropdownMenuTrigger>Open</DropdownMenuTrigger>
-  <DropdownMenuContent>
-    <DropdownMenuLabel>My Account</DropdownMenuLabel>
-    <DropdownMenuSeparator />
-    <DropdownMenuItem>Profile</DropdownMenuItem>
-    <DropdownMenuItem>Billing</DropdownMenuItem>
-    <DropdownMenuItem>Team</DropdownMenuItem>
-    <DropdownMenuItem>Subscription</DropdownMenuItem>
-  </DropdownMenuContent>
-</DropdownMenu>
+      <DropdownMenuTrigger></DropdownMenuTrigger>
+      <DropdownMenuContent
+        className="bg-zinc-800 text-white flex flex-col gap-2"
+        style={{
+          borderColor: "#27272a",
+          minWidth: "250px",
+          minHeight: "150px",
+        }}
+      >
+        <DropdownMenuLabel className="text-xl">alcuφ options</DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem asChild>
+          <Link href={"/dashboard/settings"}>
+            <Settings /> Settings &amp; Management
+          </Link>
+        </DropdownMenuItem>{" "}
+        <DropdownMenuItem asChild>
+          <Link href={"/logout"}>
+            <LogOut /> Logout
+          </Link>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
 
     // <NavigationMenu className="bg">
     //   <NavigationMenuList>
@@ -48,6 +60,5 @@ export function Dropdown() {
     //     </NavigationMenuItem>
     //   </NavigationMenuList>
     // </NavigationMenu>
-  )
+  );
 }
-

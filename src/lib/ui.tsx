@@ -8,5 +8,9 @@ export function SplashScreen() {
     splashscreen.splashes[
       Math.trunc(Math.random() * splashscreen.splashes.length)
     ];
-  return <p>{data}</p>;
+  return (
+    <p>
+      <i>{data}</i>
+    </p>
+  );
 }
