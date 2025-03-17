@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Check, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { CSSProperties, useEffect, useState } from "react";
 
 export function Dropdown() {
   return (
@@ -95,91 +95,323 @@ export function CreateSetButton() {
 }
 
 export function CommunitySection() {
-  // Get data range for infinite scroll
-  const [range, setRange] = useState<number>(5);
-  const [rangeLimit, setRangeLimit] = useState<number>(5);
-  // Create state for set
+  // States
+  const [range, setRange] = useState(5);
+  const [rangeLimit, setRangeLimit] = useState(5);
   const [sets, setSets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  // Make empty array
+  const skeleton = new Array(5).fill({});
 
-  // Get Data
+  // Backend rendering logic
   useEffect(() => {
-    // Invoke async
     async function getData() {
       const response = await fetch("/api/community", {
         method: "POST",
         body: JSON.stringify({
           method: "GET_SETS",
-          range: range,
-          rangeLimit: rangeLimit,
+          range,
+          rangeLimit,
         }),
       });
       const data = await response.json();
       setSets(data.sets);
+      setLoading(false);
     }
     getData();
   }, [range, rangeLimit]);
-  console.log(sets.length);
+
+  // Style override because tailwind wouldnt work properly
+  // for grids
+  const gridContainerStyle: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+    gap: "16px",
+    width: "90%",
+  };
+
+  const gridItemStyle: React.CSSProperties = {
+    backgroundColor: "#27272a",
+    borderRadius: "0.5rem",
+    padding: "0.75rem",
+    color: "#d4d4d8",
+  };
+
+  const titleStyle: React.CSSProperties = {
+    fontSize: "1.25rem",
+    fontWeight: "700",
+    color: "#f4f4f5",
+    margin: 0,
+  };
+
+  const creatorStyle: React.CSSProperties = {
+    fontSize: "0.875rem",
+    color: "#a1a1aa",
+    marginTop: "0.25rem",
+  };
+
+  const descriptionStyle: React.CSSProperties = {
+    fontSize: "0.875rem",
+    marginTop: "1rem",
+    display: "-webkit-box",
+    WebkitLineClamp: 3,
+    WebkitBoxOrient: "vertical",
+    overflow: "hidden",
+    color: "#d4d4d8",
+  };
+
+  const tagStyle: React.CSSProperties = {
+    backgroundColor: "#3f3f46",
+    color: "#d4d4d8",
+    padding: "0.25rem 0.5rem",
+    borderRadius: "0.375rem",
+    fontSize: "0.75rem",
+  };
+
+  const bottomSectionStyle: React.CSSProperties = {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: "1.5rem",
+    paddingTop: "1rem",
+    borderTop: "1px solid #3f3f46",
+  };
+
+  const statsStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    fontSize: "0.75rem",
+    color: "#a1a1aa",
+  };
+
+  const statItemStyle: React.CSSProperties = {
+    display: "flex",
+    alignItems: "center",
+    gap: "4px",
+  };
+
+  const iconWrapperStyle: CSSProperties = {
+    backgroundColor: "#3f3f46",
+    color: "#d4d4d8",
+    borderRadius: "9999px",
+    padding: "0.125rem",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  };
+
+  if (loading) {
+    return (
+      <div style={{ width: "100%" }} className="flex justify-center">
+        <div style={gridContainerStyle}>
+          {skeleton.map((set, id) => (
+            <div key={id} style={gridItemStyle} className="animate-pulse">
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "flex-start",
+                }}
+              >
+                <div>
+                  {/* Title Placeholder */}
+                  <div
+                    style={{
+                      ...titleStyle,
+                      backgroundColor: "#e5e7eb",
+                      width: "150px",
+                      height: "24px",
+                      borderRadius: "4px",
+                    }}
+                  ></div>
+                  {/* Creator Placeholder */}
+                  <div
+                    style={{
+                      ...creatorStyle,
+                      backgroundColor: "#e5e7eb",
+                      width: "100px",
+                      height: "16px",
+                      borderRadius: "4px",
+                      marginTop: "0.5rem",
+                    }}
+                  ></div>
+                </div>
+              </div>
+
+              {/* Description Placeholder */}
+              <div
+                style={{
+                  ...descriptionStyle,
+                  backgroundColor: "#e5e7eb",
+                  width: "100%",
+                  height: "48px",
+                  borderRadius: "4px",
+                  marginTop: "0.5rem",
+                }}
+              ></div>
+
+              {/* Additional badge placeholders (e.g., for tags or metadata) */}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: "8px",
+                  marginTop: "1rem",
+                }}
+              >
+                <div
+                  style={{
+                    backgroundColor: "#e5e7eb",
+                    width: "50px",
+                    height: "20px",
+                    borderRadius: "4px",
+                  }}
+                ></div>
+                <div
+                  style={{
+                    backgroundColor: "#e5e7eb",
+                    width: "50px",
+                    height: "20px",
+                    borderRadius: "4px",
+                  }}
+                ></div>
+              </div>
+
+              <div style={bottomSectionStyle}>
+                <div style={statsStyle}>
+                  <div style={statItemStyle}>
+                    {/* Icon Placeholder */}
+                    <span
+                      style={{
+                        ...iconWrapperStyle,
+                        backgroundColor: "#e5e7eb",
+                        borderRadius: "50%",
+                        width: "12px",
+                        height: "12px",
+                        display: "inline-block",
+                      }}
+                    ></span>
+                    {/* Text Placeholder for "0 questions" */}
+                    <div
+                      style={{
+                        backgroundColor: "#e5e7eb",
+                        width: "40px",
+                        height: "14px",
+                        borderRadius: "4px",
+                        marginLeft: "0.5rem",
+                      }}
+                    ></div>
+                  </div>
+                  <div style={statItemStyle}>
+                    <span
+                      style={{
+                        ...iconWrapperStyle,
+                        backgroundColor: "#e5e7eb",
+                        borderRadius: "50%",
+                        width: "12px",
+                        height: "12px",
+                        display: "inline-block",
+                      }}
+                    ></span>
+                    {/* Text Placeholder for "0 plays" */}
+                    <div
+                      style={{
+                        backgroundColor: "#e5e7eb",
+                        width: "40px",
+                        height: "14px",
+                        borderRadius: "4px",
+                        marginLeft: "0.5rem",
+                      }}
+                    ></div>
+                  </div>
+                </div>
+                {/* Button Placeholder */}
+                <div
+                  style={{
+                    backgroundColor: "#e5e7eb",
+                    width: "100px",
+                    height: "32px",
+                    borderRadius: "4px",
+                  }}
+                ></div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+  // Content
   return (
     <>
-      {/* Render and update query based on filter */}
-      {sets.map((set, id: number) => {
-        return (
-          <div key={id} className="bg-zinc-800 rounded-lg p-4 border-0">
-            <div className="flex items-start justify-between">
-              <div>
-                <h3 className="text-xl font-bold text-zinc-100">
-                  {set.name || "Untitled Set"}
-                </h3>
-                <p className="text-zinc-400 text-sm mt-1">by {set.creator}</p>
-              </div>
-            </div>
-
-            <p className="text-zinc-300 mt-4 text-sm line-clamp-3">
-              {set.description || "No description provided."}
-            </p>
-
-            <div className="flex flex-wrap gap-2 mt-4">
-              {set.tags.length > 0 ? (
-                set.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="bg-zinc-700 text-zinc-300 px-2 py-1 rounded-md text-xs"
-                  >
-                    {tag}
-                  </span>
-                ))
-              ) : (
-                <span className="bg-zinc-700 text-zinc-300 px-2 py-1 rounded-md text-xs">
-                  No tags
-                </span>
-              )}
-            </div>
-            <div className="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700">
-              <div className="flex items-center gap-4">
-                <div className="flex items-center gap-1 text-zinc-400 text-xs">
-                  <span className="bg-zinc-700 text-zinc-300 rounded-full p-1">
-                    <Check className="h-3 w-3" />
-                  </span>
-                  {set.questions} questions
+      {sets.length > 0 ? (
+        <div style={{ width: "100%" }} className="flex justify-center">
+          <div style={gridContainerStyle}>
+            {sets.map((set, id) => (
+              <div key={id} style={gridItemStyle}>
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "flex-start",
+                  }}
+                >
+                  <div>
+                    <h3 style={titleStyle}>{set.name || "Untitled Set"}</h3>
+                    <p style={creatorStyle}>by {set.creator}</p>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 text-zinc-400 text-xs">
-                  <span className="bg-zinc-700 text-zinc-300 rounded-full p-1">
-                    <User className="h-3 w-3" />
-                  </span>
-                  {set.plays} plays
+
+                <p style={descriptionStyle}>
+                  {set.description || "No description provided."}
+                </p>
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexWrap: "wrap",
+                    gap: "8px",
+                    marginTop: "1rem",
+                  }}
+                >
+                  {set.tags.length > 0 ? (
+                    set.tags.map((tag, index) => (
+                      <span key={index} style={tagStyle}>
+                        {tag}
+                      </span>
+                    ))
+                  ) : (
+                    <span style={tagStyle}>No tags</span>
+                  )}
+                </div>
+
+                <div style={bottomSectionStyle}>
+                  <div style={statsStyle}>
+                    <div style={statItemStyle}>
+                      <span style={iconWrapperStyle}>
+                        <Check
+                          style={{ width: "0.75rem", height: "0.75rem" }}
+                        />
+                      </span>
+                      {set.questions} questions
+                    </div>
+                    <div style={statItemStyle}>
+                      <span style={iconWrapperStyle}>
+                        <User style={{ width: "0.75rem", height: "0.75rem" }} />
+                      </span>
+                      {set.plays} plays
+                    </div>
+                  </div>
+                  <Button>View Details</Button>
                 </div>
               </div>
-              <Button
-                size="sm"
-                variant="default"
-                className="text-xs h-8 border-zinc-700 text-zinc-300 hover:bg-zinc-700"
-              >
-                View Details
-              </Button>
-            </div>
+            ))}
           </div>
-        );
-      })}
+        </div>
+      ) : (
+        <h1 className="text-white">No sets found</h1>
+      )}
     </>
   );
 }

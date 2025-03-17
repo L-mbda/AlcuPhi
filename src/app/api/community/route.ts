@@ -135,14 +135,14 @@ export async function POST(req: NextRequest) {
         tags: questionCollection.tags,
         creator: user.name,
         plays: questionCollection.plays,
-        questions: count(question) || 0,
+        questions: count(question),
       })
       .from(questionCollection)
       .limit(range)
       .offset(range - data.rangeLimit)
       .leftJoin(user, eq(user.id, questionCollection.creatorID))
-      .fullJoin(question, eq(question.collectionID, questionCollection.id));
-    console.log(query);
+      .fullJoin(question, eq(question.collectionID, questionCollection.id))
+      .groupBy(questionCollection.id, user.name);
     return NextResponse.json({
       status: "success",
       sets: query,
