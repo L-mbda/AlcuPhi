@@ -1,7 +1,7 @@
 import { db } from "@/db/db";
-import { question, questionCollection, questionLog } from "@/db/schema";
+import { question, questionCollection, questionLog, user } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
-import { eq } from "drizzle-orm";
+import { count, eq } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(request: NextRequest) {
@@ -116,4 +116,40 @@ export async function DELETE(request: NextRequest) {
       status: 405,
     },
   );
+}
+
+// POST Function for Sets
+export async function POST(req: NextRequest) {
+  const data = await req.json();
+  if (data.method == "GET_SETS") {
+    // Get range
+    const range = data.range;
+    // Query for sets
+    const query = await (
+      await db()
+    )
+      .select({
+        id: questionCollection.id,
+        name: questionCollection.name,
+        description: questionCollection.content,
+        tags: questionCollection.tags,
+        creator: user.name,
+        plays: questionCollection.plays,
+        questions: count(question) || 0,
+      })
+      .from(questionCollection)
+      .limit(range)
+      .offset(range - data.rangeLimit)
+      .leftJoin(user, eq(user.id, questionCollection.creatorID))
+      .fullJoin(question, eq(question.collectionID, questionCollection.id));
+    console.log(query);
+    return NextResponse.json({
+      status: "success",
+      sets: query,
+    });
+  }
+  // Return set
+  return NextResponse.json({
+    explanation: "This method allows you to get the information about a set",
+  });
 }

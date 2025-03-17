@@ -17,8 +17,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, Settings } from "lucide-react";
+import { Check, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 export function Dropdown() {
   return (
@@ -89,6 +90,96 @@ export function CreateSetButton() {
           </DialogHeader>
         </DialogContent>
       </Dialog>
+    </>
+  );
+}
+
+export function CommunitySection() {
+  // Get data range for infinite scroll
+  const [range, setRange] = useState<number>(5);
+  const [rangeLimit, setRangeLimit] = useState<number>(5);
+  // Create state for set
+  const [sets, setSets] = useState<any[]>([]);
+
+  // Get Data
+  useEffect(() => {
+    // Invoke async
+    async function getData() {
+      const response = await fetch("/api/community", {
+        method: "POST",
+        body: JSON.stringify({
+          method: "GET_SETS",
+          range: range,
+          rangeLimit: rangeLimit,
+        }),
+      });
+      const data = await response.json();
+      setSets(data.sets);
+    }
+    getData();
+  }, [range, rangeLimit]);
+  console.log(sets.length);
+  return (
+    <>
+      {/* Render and update query based on filter */}
+      {sets.map((set, id: number) => {
+        return (
+          <div key={id} className="bg-zinc-800 rounded-lg p-4 border-0">
+            <div className="flex items-start justify-between">
+              <div>
+                <h3 className="text-xl font-bold text-zinc-100">
+                  {set.name || "Untitled Set"}
+                </h3>
+                <p className="text-zinc-400 text-sm mt-1">by {set.creator}</p>
+              </div>
+            </div>
+
+            <p className="text-zinc-300 mt-4 text-sm line-clamp-3">
+              {set.description || "No description provided."}
+            </p>
+
+            <div className="flex flex-wrap gap-2 mt-4">
+              {set.tags.length > 0 ? (
+                set.tags.map((tag, index) => (
+                  <span
+                    key={index}
+                    className="bg-zinc-700 text-zinc-300 px-2 py-1 rounded-md text-xs"
+                  >
+                    {tag}
+                  </span>
+                ))
+              ) : (
+                <span className="bg-zinc-700 text-zinc-300 px-2 py-1 rounded-md text-xs">
+                  No tags
+                </span>
+              )}
+            </div>
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-zinc-700">
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                  <span className="bg-zinc-700 text-zinc-300 rounded-full p-1">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  {set.questions} questions
+                </div>
+                <div className="flex items-center gap-1 text-zinc-400 text-xs">
+                  <span className="bg-zinc-700 text-zinc-300 rounded-full p-1">
+                    <User className="h-3 w-3" />
+                  </span>
+                  {set.plays} plays
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="default"
+                className="text-xs h-8 border-zinc-700 text-zinc-300 hover:bg-zinc-700"
+              >
+                View Details
+              </Button>
+            </div>
+          </div>
+        );
+      })}
     </>
   );
 }

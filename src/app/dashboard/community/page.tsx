@@ -1,5 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { CreateSetButton } from "@/lib/create-set-button";
+import { CommunitySection } from "@/lib/menu";
 import { getSessionData } from "@/lib/session";
 import { SplashScreen } from "@/lib/ui";
 import { LogOut, Settings } from "lucide-react";
@@ -7,7 +8,9 @@ import Link from "next/link";
 
 // Dashboard
 export default async function Dashboard() {
+  // Get session data
   const session = (await getSessionData()).credentials;
+  // Return
   return (
     <div className="bg-zinc-950 h-full w-full absolute">
       {/* For the top menu */}
@@ -38,9 +41,12 @@ export default async function Dashboard() {
       <div className="p-10 w-full ">
         <h1 className="font-black text-5xl">Community</h1>
         <p>Practice with sets created by the community.</p>
+        <br />
         {/* Create set component */}
         <CreateSetButton name={session?.name} />
       </div>
+      {/* Components, inf scroll */}
+      <CommunitySection />
     </div>
   );
 }

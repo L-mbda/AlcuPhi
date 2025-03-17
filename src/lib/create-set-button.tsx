@@ -124,8 +124,8 @@ export function CreateSetButton({ name = "user" }: { name?: string }) {
               className={cn(
                 "flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors",
                 step === "info"
-                  ? "text-zinc-100 border-b-2 border-zinc-600"
-                  : "text-zinc-400 hover:text-zinc-300",
+                  ? "text-zinc-100 bg-zinc-700"
+                  : "text-zinc-400 bg-zinc-800",
               )}
             >
               <Info className="h-4 w-4" />
@@ -137,8 +137,8 @@ export function CreateSetButton({ name = "user" }: { name?: string }) {
                 "flex-1 py-3 px-4 text-sm font-medium flex items-center justify-center gap-2 transition-colors",
                 !isFormValid && "opacity-50 cursor-not-allowed",
                 step === "preview"
-                  ? "text-zinc-100 border-b-2 border-zinc-600"
-                  : "text-zinc-400 hover:text-zinc-300",
+                  ? "text-zinc-100 border-b-2 border-zinc-600 bg-zinc-700"
+                  : "text-zinc-400 hover:text-zinc-300 bg-zinc-800",
               )}
               disabled={!isFormValid}
             >
