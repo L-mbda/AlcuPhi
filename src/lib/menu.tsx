@@ -2,6 +2,13 @@
 
 import { Button } from "@/components/ui/button";
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
   DialogContent,
   DialogTrigger,
   Dialog,
@@ -17,6 +24,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TagsInput } from "@/components/ui/tags-input";
 import { Check, LogOut, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { CSSProperties, useEffect, useState } from "react";
@@ -96,12 +104,19 @@ export function CreateSetButton() {
 
 export function CommunitySection() {
   // States
-  const [range, setRange] = useState(5);
-  const [rangeLimit, setRangeLimit] = useState(5);
+  const [range, setRange] = useState(8);
+  const [rangeLimit, setRangeLimit] = useState(8);
+  /* eslint-disable @typescript-eslint/no-explicit-any */
   const [sets, setSets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  // State for amount of sets in network
+  const [networkAmount, setNetworkAmount] = useState(0);
+  // States for Filters
+  const [tagsFilter, setTagsFilter] = useState<string[]>([]);
+  const [clearCacheStore, setClearCacheStore] = useState(false);
+
   // Make empty array
-  const skeleton = new Array(5).fill({});
+  const skeleton = new Array(8).fill({});
 
   // Backend rendering logic
   useEffect(() => {
@@ -112,14 +127,31 @@ export function CommunitySection() {
           method: "GET_SETS",
           range,
           rangeLimit,
+          tags: tagsFilter,
         }),
       });
       const data = await response.json();
-      setSets(data.sets);
+      // Concat new set with existing one,
+      // effectively establishing infinite item rendering
+      console.log(sets);
+      // console.log(data.sets);
+      // Check if tags were first invoked
+      // and set sets to empty
+      if (clearCacheStore) {
+        setSets(data.sets);
+        setRange(8);
+        setRangeLimit(8);
+        setClearCacheStore(false);
+      } else {
+        // Otherwise, move on
+        setSets(sets.concat(data.sets));
+      }
       setLoading(false);
+      // Set network amount
+      setNetworkAmount(data.setsInNetwork);
     }
     getData();
-  }, [range, rangeLimit]);
+  }, [range, tagsFilter]);
 
   // Style override because tailwind wouldnt work properly
   // for grids
@@ -128,6 +160,7 @@ export function CommunitySection() {
     gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
     gap: "16px",
     width: "90%",
+    marginBottom: "2rem",
   };
 
   const gridItemStyle: React.CSSProperties = {
@@ -344,74 +377,126 @@ export function CommunitySection() {
   }
   // Content
   return (
-    <>
+    <main className="flex flex-col gap-4 items-center">
+      {/* Filter */}
+      <div
+        className="flex justify-between flex-col items-center mb-4"
+        style={{ width: "90%" }}
+      >
+        <Card className="w-full bg-zinc-900 border-0 text-white">
+          <CardHeader>
+            <CardTitle>
+              <h1 className="font-black">Filter Sets</h1>
+            </CardTitle>
+            <CardDescription>Filter sets based on tags</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* Tags Input */}
+            <TagsInput
+              id="setTags"
+              name="setTags"
+              placeholder="Add tags (e.g., mechanics, thermodynamics)"
+              value={tagsFilter}
+              onChange={(tags) => {
+                // First, raise the clear
+                // cache store flag
+                setClearCacheStore(true);
+                // Invoke refetch
+                setTagsFilter(tags);
+              }}
+              className="bg-zinc-800 border-zinc-700 focus:border-zinc-600 focus:ring-zinc-700 text-zinc-100"
+              maxTags={5}
+            />
+          </CardContent>
+        </Card>
+      </div>
+      {/* Rendering sets */}
       {sets.length > 0 ? (
-        <div style={{ width: "100%" }} className="flex justify-center">
-          <div style={gridContainerStyle}>
-            {sets.map((set, id) => (
-              <div key={id} style={gridItemStyle}>
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                  }}
-                >
-                  <div>
-                    <h3 style={titleStyle}>{set.name || "Untitled Set"}</h3>
-                    <p style={creatorStyle}>by {set.creator}</p>
-                  </div>
-                </div>
-
-                <p style={descriptionStyle}>
-                  {set.description || "No description provided."}
-                </p>
-
-                <div
-                  style={{
-                    display: "flex",
-                    flexWrap: "wrap",
-                    gap: "8px",
-                    marginTop: "1rem",
-                  }}
-                >
-                  {set.tags.length > 0 ? (
-                    set.tags.map((tag, index) => (
-                      <span key={index} style={tagStyle}>
-                        {tag}
-                      </span>
-                    ))
-                  ) : (
-                    <span style={tagStyle}>No tags</span>
-                  )}
-                </div>
-
-                <div style={bottomSectionStyle}>
-                  <div style={statsStyle}>
-                    <div style={statItemStyle}>
-                      <span style={iconWrapperStyle}>
-                        <Check
-                          style={{ width: "0.75rem", height: "0.75rem" }}
-                        />
-                      </span>
-                      {set.questions} questions
-                    </div>
-                    <div style={statItemStyle}>
-                      <span style={iconWrapperStyle}>
-                        <User style={{ width: "0.75rem", height: "0.75rem" }} />
-                      </span>
-                      {set.plays} plays
+        <>
+          <div style={{ width: "100%" }} className="flex flex-col items-center">
+            <div style={gridContainerStyle}>
+              {sets.map((set, id) => (
+                <div key={id} style={gridItemStyle}>
+                  <div
+                    style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "flex-start",
+                    }}
+                  >
+                    <div>
+                      <h3 style={titleStyle}>{set.name || "Untitled Set"}</h3>
+                      <p style={creatorStyle}>by {set.creator}</p>
                     </div>
                   </div>
-                  <Button>View Details</Button>
+
+                  <p style={descriptionStyle}>
+                    {set.description || "No description provided."}
+                  </p>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      flexWrap: "wrap",
+                      gap: "8px",
+                      marginTop: "1rem",
+                    }}
+                  >
+                    {set.tags.length > 0 ? (
+                      // Check tags
+                      set.tags.map((tag: any, index: any) => (
+                        <span key={index} style={tagStyle}>
+                          {tag}
+                        </span>
+                      ))
+                    ) : (
+                      <span style={tagStyle}>No tags</span>
+                    )}
+                  </div>
+
+                  <div style={bottomSectionStyle}>
+                    <div style={statsStyle}>
+                      <div style={statItemStyle}>
+                        <span style={iconWrapperStyle}>
+                          <Check
+                            style={{ width: "0.75rem", height: "0.75rem" }}
+                          />
+                        </span>
+                        {set.questions} questions
+                      </div>
+                      <div style={statItemStyle}>
+                        <span style={iconWrapperStyle}>
+                          <User
+                            style={{ width: "0.75rem", height: "0.75rem" }}
+                          />
+                        </span>
+                        {set.plays} plays
+                      </div>
+                    </div>
+                    <Button>View Details</Button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
+            {/* Detect once at end and load more,
+             effectively establishing infinite item rendering */}
+            {!(range >= networkAmount) && (
+              <Button
+                variant="default"
+                className="mt-4"
+                onClick={() => {
+                  console.log(range + ": Range");
+                  setRange(range + rangeLimit);
+                }}
+              >
+                Load more
+              </Button>
+            )}
           </div>
-        </div>
+        </>
       ) : (
         <h1 className="text-white">No sets found</h1>
       )}
-    </>
+    </main>
   );
 }

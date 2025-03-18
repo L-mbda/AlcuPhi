@@ -1,7 +1,7 @@
 import { db } from "@/db/db";
 import { question, questionCollection, questionLog, user } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
-import { count, eq } from "drizzle-orm";
+import { count, desc, eq, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(request: NextRequest) {
@@ -122,30 +122,97 @@ export async function DELETE(request: NextRequest) {
 export async function POST(req: NextRequest) {
   const data = await req.json();
   if (data.method == "GET_SETS") {
+    // Get tags
+    let tags = data.tags;
     // Get range
     const range = data.range;
-    // Query for sets
-    const query = await (
-      await db()
-    )
-      .select({
-        id: questionCollection.id,
-        name: questionCollection.name,
-        description: questionCollection.content,
-        tags: questionCollection.tags,
-        creator: user.name,
-        plays: questionCollection.plays,
-        questions: count(question),
-      })
-      .from(questionCollection)
-      .limit(range)
-      .offset(range - data.rangeLimit)
-      .leftJoin(user, eq(user.id, questionCollection.creatorID))
-      .fullJoin(question, eq(question.collectionID, questionCollection.id))
-      .groupBy(questionCollection.id, user.name);
+    let query = [];
+    // Create variable for sets in network
+    let setsInNetwork = 0;
+    // Check if tags arent undefined or if
+    // their length isnt 0
+    if (tags != undefined && tags.length != 0) {
+      // Make tags lowercase
+      tags = tags.map((tag: string) => tag.toLowerCase());
+      // Create SQL query to be able to use in WHERE clause
+      // for finding if a tag exists in the array for any collection
+      // row, without case sensitivity
+      const sqlQuery = sql`
+        EXISTS (
+          SELECT 1
+          FROM unnest(${questionCollection.tags}) AS x
+          WHERE lower(x) = ANY(${sql.raw(`ARRAY['${tags.join("','")}']::varchar[]`)})
+        )
+      `;
+      // Query for sets with tags
+      query = await (
+        await db()
+      )
+        .select({
+          id: questionCollection.id,
+          name: questionCollection.name,
+          description: questionCollection.content,
+          tags: questionCollection.tags,
+          creator: user.name,
+          plays: questionCollection.plays,
+          questions: count(question),
+        })
+        .from(questionCollection)
+        // Query for selection
+        .where(sqlQuery)
+        .limit(data.rangeLimit)
+        .offset(range - data.rangeLimit)
+        .leftJoin(user, eq(user.id, questionCollection.creatorID))
+        .fullJoin(question, eq(question.collectionID, questionCollection.id))
+        .groupBy(questionCollection.id, user.name)
+        .orderBy(desc(questionCollection.plays));
+      // Grabbing sets from query
+      setsInNetwork = (
+        await (
+          await db()
+        )
+          .select({
+            amount: count(),
+          })
+          .from(questionCollection)
+          .where(sqlQuery)
+      )[0].amount;
+    } else {
+      // Query for sets (wildcard)
+      query = await (
+        await db()
+      )
+        .select({
+          id: questionCollection.id,
+          name: questionCollection.name,
+          description: questionCollection.content,
+          tags: questionCollection.tags,
+          creator: user.name,
+          plays: questionCollection.plays,
+          questions: count(question),
+        })
+        .from(questionCollection)
+        .limit(data.rangeLimit)
+        .offset(range - data.rangeLimit)
+        .leftJoin(user, eq(user.id, questionCollection.creatorID))
+        .fullJoin(question, eq(question.collectionID, questionCollection.id))
+        .groupBy(questionCollection.id, user.name)
+        .orderBy(desc(questionCollection.plays));
+      // General purpose grab
+      setsInNetwork = (
+        await (
+          await db()
+        )
+          .select({
+            amount: count(),
+          })
+          .from(questionCollection)
+      )[0].amount;
+    }
     return NextResponse.json({
       status: "success",
       sets: query,
+      setsInNetwork: setsInNetwork,
     });
   }
   // Return set
