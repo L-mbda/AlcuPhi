@@ -907,11 +907,11 @@ export function UserSets({ id }: { id: number }) {
 }
 
 export function AddQuestionButton({
-  userID,
+  collectionID,
   text,
 }: {
-  userID: number;
+  collectionID: number;
   text: string;
 }) {
-  return <AddQuestionModal collectionId={userID} buttonText={text} />;
+  return <AddQuestionModal collectionId={collectionID} buttonText={text} />;
 }

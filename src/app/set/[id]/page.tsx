@@ -2,9 +2,7 @@ import { db } from "@/db/db";
 import { question, questionCollection, user } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
 import { count, eq } from "drizzle-orm";
-import { Check, Plus, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { Check, User } from "lucide-react";
 import { AddQuestionButton } from "@/lib/menu";
 
 export default async function Page({
@@ -92,7 +90,10 @@ export default async function Page({
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold">Questions</h2>
           {session?.id === query[0]?.creatorID && (
-            <AddQuestionButton userID={parseInt(id)} text={"Add Question"} />
+            <AddQuestionButton
+              collectionID={query[0]?.id}
+              text={"Add Question"}
+            />
           )}
         </div>
 
@@ -125,7 +126,7 @@ export default async function Page({
               {session?.id === query[0]?.creatorID && (
                 <span className="block mt-4">
                   <AddQuestionButton
-                    userID={parseInt(id)}
+                    collectionID={query[0]?.id}
                     text={"Add Your First Question"}
                   />
                 </span>

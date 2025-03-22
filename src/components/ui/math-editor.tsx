@@ -98,18 +98,18 @@ export function MathEditor({
         onValueChange={setActiveTab}
         className="w-full gap-2 flex flex-col"
       >
-        <TabsList className="grid grid-cols-2 bg-zinc-800">
+        <TabsList className="grid grid-cols-2 bg-zinc-800 text-white">
           <TabsTrigger
             value="write"
-            className="data-[state=active]:bg-zinc-700"
+            className="data-[state=active]:bg-zinc-700 text-white"
           >
-            Write
+            <span className="text-white">Write</span>
           </TabsTrigger>
           <TabsTrigger
             value="preview"
-            className="data-[state=active]:bg-zinc-700"
+            className="data-[state=active]:bg-zinc-700  text-white"
           >
-            Preview
+            <span className="text-white">Preview</span>
           </TabsTrigger>
         </TabsList>
         <TabsContent value="write" className="mt-0">
