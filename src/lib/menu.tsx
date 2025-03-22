@@ -1,5 +1,6 @@
 "use client";
 
+import { AddQuestionModal } from "@/components/ui/add-question-modal";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,7 +26,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TagsInput } from "@/components/ui/tags-input";
-import { Check, LogOut, Settings, User } from "lucide-react";
+import { Check, LogOut, Plus, Settings, User } from "lucide-react";
 import Link from "next/link";
 import { CSSProperties, useEffect, useState } from "react";
 
@@ -903,4 +904,14 @@ export function UserSets({ id }: { id: number }) {
       )}
     </main>
   );
+}
+
+export function AddQuestionButton({
+  userID,
+  text,
+}: {
+  userID: number;
+  text: string;
+}) {
+  return <AddQuestionModal collectionId={userID} buttonText={text} />;
 }
