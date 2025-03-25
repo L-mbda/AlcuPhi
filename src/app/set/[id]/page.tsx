@@ -4,6 +4,7 @@ import { getSessionData } from "@/lib/session";
 import { count, eq } from "drizzle-orm";
 import { Check, User } from "lucide-react";
 import { AddQuestionButton } from "@/lib/menu";
+import { MathRender } from "@/components/ui/math-renderer";
 
 export default async function Page({
   params,
@@ -18,7 +19,8 @@ export default async function Page({
     await db()
   )
     .select({
-      id: questionCollection.id,
+      id: questionCollection.publicID,
+      accessID: questionCollection.id,
       title: questionCollection.name,
       content: questionCollection.content,
       creatorID: questionCollection.creatorID,
@@ -33,11 +35,12 @@ export default async function Page({
     .fullJoin(question, eq(question.collectionID, questionCollection.id))
     .groupBy(questionCollection.id, user.name);
 
-  const questionQuery = await (await db())
+
+    const questionQuery = await (await db())
     .select()
     .from(question)
-    .where(eq(question.collectionID, query[0]?.id));
-
+    .where(eq(question.collectionID, query[0].accessID));
+  console.log(questionQuery)
   return (
     <section className="flex flex-col w-full min-h-[90vh] items-center pt-10 pb-16">
       {/* Collection Header */}
@@ -109,9 +112,16 @@ export default async function Page({
                     {index + 1}
                   </div>
                   <div className="space-y-3 w-full">
-                    <h3 className="text-lg font-medium">{question.question}</h3>
+                    <h3 className="text-lg font-medium"><MathRender text={question.questionName}/></h3>
                     <div className="bg-zinc-800/50 rounded-lg p-4 text-zinc-300">
-                      <p>{question.answer}</p>
+                      {
+                        question.correctAnswer.map((answerChoice,id) => {
+                          return (
+                            <MathRender text={answerChoice} key={id} />
+                          )
+                        })
+                      }
+                      <p></p>
                     </div>
                   </div>
                 </div>

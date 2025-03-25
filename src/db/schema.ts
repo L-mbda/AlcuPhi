@@ -73,7 +73,10 @@ export const question = pgTable("question", {
     .array()
     .notNull()
     .default(sql`'{}'::varchar[]`),
-  correctAnswer: varchar(),
+  correctAnswer: varchar()
+  .array()
+  .notNull()
+  .default(sql`'{}'::varchar[]`),
 });
 
 /*

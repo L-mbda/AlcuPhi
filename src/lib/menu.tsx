@@ -910,7 +910,7 @@ export function AddQuestionButton({
   collectionID,
   text,
 }: {
-  collectionID: number;
+  collectionID: string | null;
   text: string;
 }) {
   return <AddQuestionModal collectionId={collectionID} buttonText={text} />;

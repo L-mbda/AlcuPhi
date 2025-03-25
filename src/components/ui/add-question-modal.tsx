@@ -30,7 +30,7 @@ export function AddQuestionModal({
   collectionId,
   buttonText = "Add Question",
 }: {
-  collectionId: number | string;
+  collectionId: number | string | null;
   buttonText?: string;
 }) {
   const { toast } = useToast();
@@ -79,7 +79,6 @@ export function AddQuestionModal({
     setError(null);
 
     try {
-      // Prepare the data based on question type
       const formData = {
         collectionId,
         question,
@@ -95,7 +94,7 @@ export function AddQuestionModal({
             : { text: freeResponseAnswer },
       };
 
-      // Send the data to the API
+      // Send data to the API
       const response = await fetch("/api/community/questions", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -119,21 +118,22 @@ export function AddQuestionModal({
 
       const data = await response.json();
 
-      // Show success toast
+      // Show success
       toast({
         title: "Question created",
         description: "Your question has been added to the collection.",
       });
 
-      // Reset form and close modal on success
+      // Reset form and close modal 
       resetForm();
       setOpen(false);
     } catch (error) {
+      // Errors
       console.error("Error submitting question:", error);
       setError(
         error instanceof Error ? error.message : "An unexpected error occurred",
       );
-
+      // Raise toast for error
       toast({
         variant: "destructive",
         title: "Error",
