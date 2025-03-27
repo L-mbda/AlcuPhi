@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteQuestion } from "@/actions/community";
 import { AddQuestionModal } from "@/components/ui/add-question-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   DropdownMenu,
@@ -26,7 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { TagsInput } from "@/components/ui/tags-input";
-import { Check, LogOut, Plus, Settings, User } from "lucide-react";
+import { Check, LogOut, MoreVertical, Plus, Settings, Trash2, User } from "lucide-react";
 import Link from "next/link";
 import { CSSProperties, useEffect, useState } from "react";
 
@@ -914,4 +916,70 @@ export function AddQuestionButton({
   text: string;
 }) {
   return <AddQuestionModal collectionId={collectionID} buttonText={text} />;
+}
+
+// Interface for said funct
+interface question {
+  id: number;
+  collectionID: number;
+  type: string | null;
+  questionName: string | null;
+  difficulty: number | null;
+  questionCollectionTagName: string[];
+  answerChoices: string[];
+  correctAnswer: string[];
+}
+
+// Question Function
+export function QuestionOptions({questionInformation} : {questionInformation: question}) {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  return (
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost"  size="icon" className="text-zinc-300 hover:text-white hover:bg-zinc-700">
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-zinc-200">
+          <DropdownMenuItem className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer">Edit</DropdownMenuItem>
+          <DropdownMenuItem className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer text-red-400 hover:text-red-300" asChild>
+            <a onClick={() => setIsDeleteModalOpen(true)}>Delete</a>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+      {/* Modal for deleting question */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg w-[90%] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Question</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Are you sure you want to delete this question? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0 flex flex-row fix-tailwind-items-end">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeleteModalOpen(false)}
+              className="border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-200"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                deleteQuestion(questionInformation.id)
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+            >
+              <Trash2 className="h-4 w-4" />
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+    </>
+  )
 }

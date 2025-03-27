@@ -3,8 +3,9 @@ import { question, questionCollection, user } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
 import { count, eq } from "drizzle-orm";
 import { Check, User } from "lucide-react";
-import { AddQuestionButton } from "@/lib/menu";
+import { AddQuestionButton, QuestionOptions } from "@/lib/menu";
 import { MathRender } from "@/components/ui/math-renderer";
+import { Badge } from "@/components/ui/badge";
 
 export default async function Page({
   params,
@@ -116,14 +117,26 @@ export default async function Page({
                     <div className="bg-zinc-800/50 rounded-lg p-4 text-zinc-300">
                       {
                         question.correctAnswer.map((answerChoice,id) => {
+                          if (question.type == 'multipleChoice') {
+                            let id = parseInt(answerChoice.split('option-')[1]);
+                            // Compartmentalized Rendering
+                            return (
+                              <MathRender text={question.answerChoices[id-1].split('=')[1]} key={id} />
+                            )
+                          }
                           return (
                             <MathRender text={answerChoice} key={id} />
                           )
                         })
                       }
-                      <p></p>
                     </div>
                   </div>
+                  <Badge className="mt-2"><h1>{question.type == 'multipleChoice' ? ("MCQ") : ("FRQ")}</h1></Badge>
+                  {
+                    (query[0].creatorID == session?.id) ? (
+                      <QuestionOptions questionInformation={question} />
+                    ) : null
+                  }
                 </div>
               </div>
             ))}

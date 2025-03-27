@@ -19,7 +19,7 @@ export default async function SignIn({ searchParams }: { searchParams: any }) {
       <div className="dots_bg bg-zinc-900 min-h-screen flex justify-center items-center">
         <form
           action={Authentication.register}
-          className="bg-zinc-700 p-6 min-h-[50vh] min-w-[50%] flex-col gap-2 rounded-md flex justify-center shadow-md"
+          className="bg-zinc-700 p-6 min-h-[50vh] min-w-[50%] max-w-[90%] flex-col gap-2 rounded-md flex justify-center shadow-md"
         >
           <div>
             <h1 className="font-['STIX'] font-[700] text-[45px] w-[75%]">
@@ -67,10 +67,10 @@ export default async function SignIn({ searchParams }: { searchParams: any }) {
   }
   return (
     <div className="dots_bg bg-zinc-900 min-h-screen flex justify-center items-center">
-      <form
-        className="bg-zinc-700 p-6 min-h-[50vh] min-w-[50%] flex-col gap-2 rounded-md flex justify-center shadow-md"
-        action={Authentication.login}
-      >
+        <form
+          action={Authentication.login}
+          className="bg-zinc-700 p-6 min-h-[50vh] min-w-[50%] max-w-[90%] flex-col gap-2 rounded-md flex justify-center shadow-md"
+        >
         <div>
           <h1 className="font-['STIX'] font-[700] text-[45px] w-[75%]">
             alcuφ
