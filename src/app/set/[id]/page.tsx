@@ -6,6 +6,8 @@ import { Check, User } from "lucide-react";
 import { AddQuestionButton, QuestionOptions } from "@/lib/menu";
 import { MathRender } from "@/components/ui/math-renderer";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 export default async function Page({
   params,
@@ -70,6 +72,9 @@ export default async function Page({
               </span>
             )}
           </div>
+          {
+            questionQuery.length == 0 ? null : (<Button variant={'outline'} className="text-black" asChild><Link href={'/play/' + id}>Play Set</Link></Button>)
+          }
         </div>
 
         {/* Stats */}
@@ -88,7 +93,6 @@ export default async function Page({
           </div>
         </div>
       </div>
-
       {/* Questions section */}
       <div className="w-[90%] mt-8">
         <div className="flex justify-between items-center mb-4">
@@ -114,14 +118,16 @@ export default async function Page({
                   </div>
                   <div className="space-y-3 w-full">
                     <h3 className="text-lg font-medium"><MathRender text={question.questionName}/></h3>
-                    <div className="bg-zinc-800/50 rounded-lg p-4 text-zinc-300">
+                    <div className="bg-zinc-800/50 rounded-lg p-4 text-zinc-300 gap-2 flex flex-col">
                       {
                         question.correctAnswer.map((answerChoice,id) => {
                           if (question.type == 'multipleChoice') {
                             let id = parseInt(answerChoice.split('option-')[1]);
                             // Compartmentalized Rendering
                             return (
-                              <MathRender text={question.answerChoices[id-1].split('=')[1]} key={id} />
+                              <>
+                                <MathRender text={question.answerChoices[id-1].split('=')[1]} key={id} />
+                              </>
                             )
                           }
                           return (

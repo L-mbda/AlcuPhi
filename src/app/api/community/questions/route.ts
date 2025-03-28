@@ -67,3 +67,50 @@ export async function POST(data: NextRequest) {
     { status: 500 },
   );
 }
+
+export async function PUT(data: NextRequest) {
+  const json = await data.json();
+  console.log(json)
+  const session = await getSessionData();
+  const token = session;
+  if (session.action == 'continue' && json.id !== null) {
+    const data = await (await db()).select().from(question).where(eq(question.id, parseInt(json.id)));
+
+    if (data.length != 0) {
+      // Check collection
+      const collectionInfo = await (await db()).select().from(questionCollection).where(and(eq(questionCollection.id,json.collectionID),eq(token.credentials?.id,questionCollection.creatorID)));
+      if (collectionInfo.length == 0) {
+        return NextResponse.json({'message': "Permissions are invalid or the set could not be found."},{'status': 403})
+      }
+      // Check if type
+      if (json.type == 'freeResponse') {
+        await (await db()).update(question).set({
+          'questionName': json.questionName, 
+          'type': json.type,
+          'questionCollectionTagName': collectionInfo[0].tags,
+          'answerChoices': [],
+          'correctAnswer': json.correctAnswer,
+        })
+      } else {        
+        await (await db()).update(question).set({
+          'questionName': json.questionName, 
+          'type': json.type,
+          'questionCollectionTagName': collectionInfo[0].tags,
+          'answerChoices': json.answerChoices,
+          'correctAnswer': json.correctAnswer,
+        })       
+      }
+      return NextResponse.json({
+        'message': 'SUCCESS'
+      }, {status: 201})
+    }
+
+  }
+  // Return error
+  return NextResponse.json(
+    {
+      message: "An error occured while creating the question",
+    },
+    { status: 500 },
+  );
+}

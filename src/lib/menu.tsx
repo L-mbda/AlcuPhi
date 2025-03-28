@@ -27,7 +27,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { EditQuestionForm } from "@/components/ui/edit-question-form";
 import { TagsInput } from "@/components/ui/tags-input";
+import { question } from "@/db/schema";
 import { Check, LogOut, MoreVertical, Plus, Settings, Trash2, User } from "lucide-react";
 import Link from "next/link";
 import { CSSProperties, useEffect, useState } from "react";
@@ -933,6 +935,7 @@ interface question {
 // Question Function
 export function QuestionOptions({questionInformation} : {questionInformation: question}) {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
+  const [isEditModalOpen, setEditModalOpen] = useState(false)
   return (
     <>
       <DropdownMenu>
@@ -943,12 +946,24 @@ export function QuestionOptions({questionInformation} : {questionInformation: qu
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-zinc-200">
-          <DropdownMenuItem className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer">Edit</DropdownMenuItem>
+          <DropdownMenuItem className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer" asChild><a onClick={() => setEditModalOpen(true)}>Edit</a></DropdownMenuItem>
           <DropdownMenuItem className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer text-red-400 hover:text-red-300" asChild>
             <a onClick={() => setIsDeleteModalOpen(true)}>Delete</a>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      {/* Modal for edit */}
+      <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
+      <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg w-[90%] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Edit Question</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              This form allows you to edit the question.
+            </DialogDescription>
+            <EditQuestionForm questionInfo={questionInformation} />
+          </DialogHeader>
+        </DialogContent>
+      </Dialog>
       {/* Modal for deleting question */}
       <Dialog open={isDeleteModalOpen} onOpenChange={setIsDeleteModalOpen}>
         <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg w-[90%] sm:max-w-[425px]">
