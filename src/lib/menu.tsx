@@ -1,6 +1,6 @@
 "use client";
 
-import { deleteQuestion } from "@/actions/community";
+import { deleteQuestion, deleteSet } from "@/actions/community";
 import { AddQuestionModal } from "@/components/ui/add-question-modal";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,10 +28,23 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { EditQuestionForm } from "@/components/ui/edit-question-form";
+import { Input } from "@/components/ui/input";
 import { TagsInput } from "@/components/ui/tags-input";
+import { Textarea } from "@/components/ui/textarea";
 import { question } from "@/db/schema";
-import { Check, LogOut, MoreVertical, Plus, Settings, Trash2, User } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Check,
+  LogOut,
+  MoreVertical,
+  Pi,
+  Plus,
+  Settings,
+  Trash2,
+  User,
+} from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CSSProperties, useEffect, useState } from "react";
 
 export function Dropdown() {
@@ -933,28 +946,47 @@ interface question {
 }
 
 // Question Function
-export function QuestionOptions({questionInformation} : {questionInformation: question}) {
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false)
-  const [isEditModalOpen, setEditModalOpen] = useState(false)
+export function QuestionOptions({
+  questionInformation,
+}: {
+  questionInformation: question;
+}) {
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditModalOpen, setEditModalOpen] = useState(false);
   return (
     <>
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost"  size="icon" className="text-zinc-300 hover:text-white hover:bg-zinc-700">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-zinc-300 hover:text-white hover:bg-zinc-700"
+          >
             <MoreVertical className="h-4 w-4" />
             <span className="sr-only">Open menu</span>
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-zinc-200">
-          <DropdownMenuItem className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer" asChild><a onClick={() => setEditModalOpen(true)}>Edit</a></DropdownMenuItem>
-          <DropdownMenuItem className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer text-red-400 hover:text-red-300" asChild>
+        <DropdownMenuContent
+          align="end"
+          className="bg-zinc-800 border-zinc-700 text-zinc-200 hover:text-zinc-200"
+        >
+          <DropdownMenuItem
+            className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer"
+            asChild
+          >
+            <a onClick={() => setEditModalOpen(true)}>Edit</a>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="hover:bg-zinc-700 focus:bg-zinc-700 cursor-pointer text-red-400 hover:text-red-300"
+            asChild
+          >
             <a onClick={() => setIsDeleteModalOpen(true)}>Delete</a>
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       {/* Modal for edit */}
       <Dialog open={isEditModalOpen} onOpenChange={setEditModalOpen}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg w-[90%] sm:max-w-[425px]">
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg w-[90%] sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="text-white">Edit Question</DialogTitle>
             <DialogDescription className="text-zinc-400">
@@ -970,13 +1002,16 @@ export function QuestionOptions({questionInformation} : {questionInformation: qu
           <DialogHeader>
             <DialogTitle className="text-white">Delete Question</DialogTitle>
             <DialogDescription className="text-zinc-400">
-              Are you sure you want to delete this question? This action cannot be undone.
+              Are you sure you want to delete this question? This action cannot
+              be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2 sm:gap-0 flex flex-row fix-tailwind-items-end">
             <Button
               variant="outline"
-              onClick={() => setIsDeleteModalOpen(false)}
+              onClick={() => {
+                setIsDeleteModalOpen(false);
+              }}
               className="border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-200"
             >
               Cancel
@@ -984,7 +1019,8 @@ export function QuestionOptions({questionInformation} : {questionInformation: qu
             <Button
               variant="destructive"
               onClick={() => {
-                deleteQuestion(questionInformation.id)
+                deleteQuestion(questionInformation.id);
+                setIsDeleteModalOpen(false);
               }}
               className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
             >
@@ -994,7 +1030,164 @@ export function QuestionOptions({questionInformation} : {questionInformation: qu
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </>
-  )
+  );
+}
+
+// Edit set interface
+interface questionSet {
+  id: string | null;
+  accessID: number | null;
+  title: string | null;
+  content: string | null;
+  creatorID: number | null;
+  tags: string[] | null;
+  plays: number | null;
+  creatorName: string | null;
+  questions: number;
+}
+
+export function EditSet({ collectionInfo }: { collectionInfo: questionSet }) {
+  const router = useRouter();
+  const { toast } = useToast();
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [tags, setTags] = useState<string[]>(collectionInfo.tags || []);
+  const [title, setTitle] = useState(collectionInfo.title || "");
+  const [description, setDescription] = useState(collectionInfo.content || "");
+  const [firstUpdate, setFirstUpdate] = useState(true);
+  const [savedChanges, setSavedChanges] = useState(false);
+
+  useEffect(() => {
+    async function updateSet() {
+      if (firstUpdate) {
+        // Prevents the first render from sending a request
+        // to update the set
+        setFirstUpdate(false);
+        return; // Exit early on first render
+      }
+      console.log(collectionInfo.id);
+      // Update set info
+      const data = await fetch("/api/community", {
+        method: "PUT",
+        body: JSON.stringify({
+          publicID: collectionInfo.id,
+          title: title,
+          description: description,
+          tags: tags,
+        }),
+      });
+      const json = await data.json();
+      console.log(json);
+      if (json.status == "success") {
+        toast({
+          title: "Updated",
+          description:
+            "Your changes have been successfully recorded. Reload the page to see these changes.",
+          duration: 3000,
+        });
+      }
+    }
+    updateSet();
+  }, [savedChanges, collectionInfo.id]);
+
+  return (
+    <>
+      <Button onClick={() => setIsEditModalOpen(true)} className="shadow-md">
+        Edit Set
+      </Button>
+      {/* Modal to edit */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg w-[90%] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Edit Set</DialogTitle>
+          </DialogHeader>
+          <form className="flex flex-col gap-2">
+            <div>
+              <Input
+                type="text"
+                className="border-none bg-zinc-800"
+                placeholder="Name"
+                defaultValue={title} // Default value for the input
+                onChange={(val) => {
+                  setTitle(val.target.value); // Update the title state
+                }}
+              />
+            </div>
+            <div>
+              <Textarea
+                className="border-none bg-zinc-800"
+                placeholder="Description"
+                defaultValue={description} // Default value for the input
+                onChange={(val) => {
+                  setDescription(val.target.value); // Update the title state
+                }}
+              />
+            </div>
+            <TagsInput
+              value={tags}
+              onChange={setTags}
+              className="bg-zinc-800"
+              maxTags={5}
+            />
+          </form>
+          <DialogFooter>
+            <Button
+              onClick={(event) => {
+                event.preventDefault();
+                setSavedChanges(!savedChanges);
+              }}
+              variant="secondary"
+            >
+              Save Changes
+            </Button>
+            {/* Delete */}
+            <Button
+              onClick={() => {
+                setDeleteModalOpen(true);
+              }}
+              className="bg-red-600 hover:bg-red-800 border-none shadow-md text-white flex items-center gap-2"
+            >
+              Delete Set
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      {/* Modal for set termination */}
+      <Dialog open={isDeleteModalOpen} onOpenChange={setDeleteModalOpen}>
+        <DialogContent className="bg-zinc-900 border-zinc-800 text-zinc-300 rounded-lg w-[90%] sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-white">Delete Set</DialogTitle>
+            <DialogDescription className="text-zinc-400">
+              Are you sure you want to delete this set? This action cannot be
+              undone. All questions and data associated with this set will be
+              lost.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4 gap-2 sm:gap-0 flex flex-row fix-tailwind-items-end">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setDeleteModalOpen(false);
+              }}
+              className="border-zinc-700 bg-zinc-800 text-zinc-300 hover:bg-zinc-700 hover:text-zinc-200"
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                deleteSet(collectionInfo.id);
+                setDeleteModalOpen(false);
+                router.push("/dashboard/community/sets");
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white flex items-center gap-2"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
+  );
 }

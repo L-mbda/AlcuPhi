@@ -2,6 +2,7 @@ import { db } from "@/db/db";
 import { question, questionCollection, questionLog, user } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
 import { and, count, desc, eq, sql } from "drizzle-orm";
+import { Pi } from "lucide-react";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function PATCH(request: NextRequest) {
@@ -314,4 +315,48 @@ export async function POST(req: NextRequest) {
   return NextResponse.json({
     explanation: "This method allows you to get the information about a set",
   });
+}
+
+export async function PUT(request: NextRequest) {
+  const data = await request.json();
+  const session = await getSessionData();
+  if (session.action == "continue" && data.publicID != undefined) {
+    // Check if User is ownere
+    const query = await (await db())
+      .select()
+      .from(questionCollection)
+      .where(eq(questionCollection.publicID, data.publicID));
+    if (query.length != 0 && query[0].creatorID == session.credentials?.id) {
+      // Update collection
+      await (
+        await db()
+      )
+        .update(questionCollection)
+        .set({
+          content: data.description,
+          name: data.name,
+          tags: data.tags,
+        })
+        .where(eq(questionCollection.publicID, data.publicID));
+      return NextResponse.json(
+        {
+          status: "success",
+          message: "Collection has been updated successfully.",
+        },
+        {
+          status: 200,
+        },
+      );
+    }
+  }
+  return NextResponse.json(
+    {
+      status: "failure",
+      message:
+        "You aren't authorized to update the collection or the collection doesn't exist.",
+    },
+    {
+      status: 403,
+    },
+  );
 }

@@ -22,14 +22,12 @@ export default function App() {
           </div>
           <div>
             <Button className="bg-zinc-800" asChild>
-              <Link href={'/account'}>
-                Get Started
-              </Link>
+              <Link href={"/account"}>Get Started</Link>
             </Button>
           </div>
         </div>
         <footer className="justify-center flex bottom-4 fixed w-full">
-          <p>
+          <p className="w-[90%]">
             ©{new Date().getFullYear()}{" "}
             <Link
               href={"https://github.com/alcuphi/alcuphi"}

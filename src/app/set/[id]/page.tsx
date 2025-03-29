@@ -1,9 +1,10 @@
+// @ts-nocheck
 import { db } from "@/db/db";
 import { question, questionCollection, user } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
 import { count, eq } from "drizzle-orm";
 import { Check, User } from "lucide-react";
-import { AddQuestionButton, QuestionOptions } from "@/lib/menu";
+import { AddQuestionButton, EditSet, QuestionOptions } from "@/lib/menu";
 import { MathRender } from "@/components/ui/math-renderer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -38,12 +39,10 @@ export default async function Page({
     .fullJoin(question, eq(question.collectionID, questionCollection.id))
     .groupBy(questionCollection.id, user.name);
 
-
-    const questionQuery = await (await db())
+  const questionQuery = await (await db())
     .select()
     .from(question)
     .where(eq(question.collectionID, query[0].accessID));
-  console.log(questionQuery)
   return (
     <section className="flex flex-col w-full min-h-[90vh] items-center pt-10 pb-16">
       {/* Collection Header */}
@@ -72,8 +71,18 @@ export default async function Page({
               </span>
             )}
           </div>
+          {questionQuery.length == 0 ? null : (
+            <Button variant={"outline"} className="text-black" asChild>
+              <Link href={"/play/" + id}>Play Set</Link>
+            </Button>
+          )}
           {
-            questionQuery.length == 0 ? null : (<Button variant={'outline'} className="text-black" asChild><Link href={'/play/' + id}>Play Set</Link></Button>)
+            // If user is owner, show edit
+            session?.id == query[0]?.creatorID ? (
+              <>
+                <EditSet collectionInfo={query[0]} />
+              </>
+            ) : null
           }
         </div>
 
@@ -117,32 +126,39 @@ export default async function Page({
                     {index + 1}
                   </div>
                   <div className="space-y-3 w-full">
-                    <h3 className="text-lg font-medium"><MathRender text={question.questionName}/></h3>
+                    <h3 className="text-lg font-medium">
+                      <MathRender text={question.questionName} />
+                    </h3>
                     <div className="bg-zinc-800/50 rounded-lg p-4 text-zinc-300 gap-2 flex flex-col">
-                      {
-                        question.correctAnswer.map((answerChoice,id) => {
-                          if (question.type == 'multipleChoice') {
-                            let id = parseInt(answerChoice.split('option-')[1]);
-                            // Compartmentalized Rendering
-                            return (
-                              <>
-                                <MathRender text={question.answerChoices[id-1].split('=')[1]} key={id} />
-                              </>
-                            )
-                          }
+                      {question.correctAnswer.map((answerChoice, id) => {
+                        if (question.type == "multipleChoice") {
+                          let identity = parseInt(
+                            answerChoice.split("option-")[1],
+                          );
+                          // Compartmentalized Rendering
                           return (
-                            <MathRender text={answerChoice} key={id} />
-                          )
-                        })
-                      }
+                            <>
+                              <MathRender
+                                text={
+                                  question.answerChoices[identity - 1].split(
+                                    "=",
+                                  )[1]
+                                }
+                                key={id}
+                              />
+                            </>
+                          );
+                        }
+                        return <MathRender text={answerChoice} key={id} />;
+                      })}
                     </div>
                   </div>
-                  <Badge className="mt-2"><h1>{question.type == 'multipleChoice' ? ("MCQ") : ("FRQ")}</h1></Badge>
-                  {
-                    (query[0].creatorID == session?.id) ? (
-                      <QuestionOptions questionInformation={question} />
-                    ) : null
-                  }
+                  <Badge className="mt-2">
+                    <h1>{question.type == "multipleChoice" ? "MCQ" : "FRQ"}</h1>
+                  </Badge>
+                  {query[0].creatorID == session?.id ? (
+                    <QuestionOptions questionInformation={question} />
+                  ) : null}
                 </div>
               </div>
             ))}

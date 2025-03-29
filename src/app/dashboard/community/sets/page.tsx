@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Button } from "@/components/ui/button";
 import { db } from "@/db/db";
 import { user } from "@/db/schema";
@@ -9,10 +10,8 @@ import { eq } from "drizzle-orm";
 import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 
-export default async function UserGeneratedSets({
-  searchParams,
-}: {
-  searchParams: { id: string };
+export default async function UserGeneratedSets(props: {
+  params: Promise<{ id: string }>; // This is for the user ID to fetch from the database
 }) {
   const session = (await getSessionData()).credentials;
   // Do NOT REMOVE THE AWAITS, IT HAS A PURPOSE ON THE
