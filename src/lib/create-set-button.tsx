@@ -77,7 +77,7 @@ export function CreateSetButton({ name = "user" }: { name?: string }) {
       const data = await response.json();
       if (data.status === "success") {
         console.log("🟢 Set created!");
-        window.location.href = `/dashboard/community/${data.setID}`;
+        window.location.href = `/set/${data.setID}`;
       } else {
         console.log("🔴 Set was not created.");
         setIsSubmitting(false);
