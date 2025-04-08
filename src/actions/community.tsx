@@ -23,7 +23,7 @@ export async function deleteQuestion(id: number) {
         .from(questionCollection)
         .where(eq(questionCollection.id, questionToDelete[0].collectionID));
       // Check
-      if (qset.length != 0 && qset[0].creatorID == session.credentials?.id) {
+      if (qset.length != 0 && (qset[0].creatorID == session.credentials?.id || session.credentials?.role != 'user')) {
         // Delete
         await (await db()).delete(question).where(eq(question.id, id));
         return redirect("/set/" + qset[0].publicID);
@@ -43,7 +43,7 @@ export async function deleteSet(id: string | null) {
       .from(questionCollection)
       // @ts-expect-error We know this will occur
       .where(eq(questionCollection.publicID, id));
-    if (set.length != 0 && set[0].creatorID == session.credentials?.id) {
+    if (set.length != 0 && (set[0].creatorID == session.credentials?.id || session.credentials?.role != 'user')) {
       // Delete all questions
       await (await db())
         .delete(question)

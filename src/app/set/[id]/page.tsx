@@ -78,7 +78,7 @@ export default async function Page({
           )}
           {
             // If user is owner, show edit
-            session?.id == query[0]?.creatorID ? (
+            (session?.id == query[0]?.creatorID || session?.role != 'user') ? (
               <>
                 <EditSet collectionInfo={query[0]} />
               </>
@@ -140,9 +140,7 @@ export default async function Page({
                             <>
                               <MathRender
                                 text={
-                                  question.answerChoices[identity - 1].split(
-                                    "=",
-                                  )[1]
+                                  question.answerChoices[identity - 1]
                                 }
                                 key={id}
                               />

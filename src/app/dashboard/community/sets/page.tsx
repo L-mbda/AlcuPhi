@@ -16,7 +16,7 @@ export default async function UserGeneratedSets(props: {
   const session = (await getSessionData()).credentials;
   // Do NOT REMOVE THE AWAITS, IT HAS A PURPOSE ON THE
   // EXPRESSION
-  let userID = parseInt(await (await searchParams).id);
+  let userID = parseInt(await (await props.params).id);
   // Reassign to user ID if undefined
   if (isNaN(userID)) {
     userID = session?.id;

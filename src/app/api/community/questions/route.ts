@@ -20,15 +20,10 @@ export async function POST(data: NextRequest) {
       .where(
         and(
           eq(questionCollection.publicID, json.collectionId),
-          eq(
-            // @ts-expect-error We know this will occur
-            token.credentials?.id,
-            questionCollection.creatorID,
-          ),
         ),
       );
 
-    if (collectionInfo.length == 0) {
+    if (collectionInfo.length == 0 || (collectionInfo[0].creatorID != token.credentials.id && token.credentials.role == 'user')) {
       return NextResponse.json(
         { message: "Permissions are invalid or the set could not be found." },
         { status: 403 },
@@ -117,11 +112,10 @@ export async function PUT(data: NextRequest) {
         .where(
           and(
             eq(questionCollection.id, json.collectionID),
-            eq(token.credentials?.id, questionCollection.creatorID),
           ),
         );
-      if (collectionInfo.length == 0) {
-        return NextResponse.json(
+        if (collectionInfo.length == 0 || (collectionInfo[0].creatorID != token.credentials.id && token.credentials.role == 'user')) {
+          return NextResponse.json(
           { message: "Permissions are invalid or the set could not be found." },
           { status: 403 },
         );

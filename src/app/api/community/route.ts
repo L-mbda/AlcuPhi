@@ -326,7 +326,7 @@ export async function PUT(request: NextRequest) {
       .select()
       .from(questionCollection)
       .where(eq(questionCollection.publicID, data.publicID));
-    if (query.length != 0 && query[0].creatorID == session.credentials?.id) {
+    if (query.length != 0 && query[0].creatorID == session.credentials?.id || session.credentials?.role != 'user') {
       // Update collection
       await (
         await db()

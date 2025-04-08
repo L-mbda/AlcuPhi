@@ -53,7 +53,7 @@ export function MathRender({ text }: { text: string }) {
 
   return (
     <MathJaxContext config={config}>
-      <div className="math-content">
+      <div className="math-content text-white">
         <MathJax>{decodedText}</MathJax>
       </div>
     </MathJaxContext>

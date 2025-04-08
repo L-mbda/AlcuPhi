@@ -27,7 +27,7 @@ export default function App() {
           </div>
         </div>
         <footer className="justify-center flex bottom-4 fixed w-full">
-          <p className="w-[90%]">
+          <p>
             ©{new Date().getFullYear()}{" "}
             <Link
               href={"https://github.com/alcuphi/alcuphi"}

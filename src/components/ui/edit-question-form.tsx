@@ -175,7 +175,7 @@ export function EditQuestionForm({
 
       // Send data to the API
       const response = await fetch(
-        `/api/community/questions/${questionInfo.id}`,
+        `/api/community/questions/`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
