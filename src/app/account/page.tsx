@@ -1,105 +1,45 @@
-import { Authentication } from "@/actions/authentication";
-import { cookies } from "next/headers";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import {Input} from "@/components/ui/input"
-import { Button } from "@/components/ui/button";
+import { Authentication } from "@/actions/authentication"
+import { AuthForm } from "@/components/auth/auth-form";
+import { cookies } from "next/headers"
+import { redirect } from "next/navigation"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export default async function SignIn({ searchParams }: { searchParams: any }) {
-  // Check if there is token and redirect
+export default async function AccountPage({
+  searchParams,
+}: {
+  searchParams: { action?: string; message?: string }
+}) {
+  // Check if user is already authenticated and redirect
   if ((await cookies()).get("header") !== undefined) {
-    redirect("/dashboard");
+    redirect("/dashboard")
   }
 
-  const action = (await searchParams).action;
-  const message = (await searchParams).message;
-  if (action == "register") {
-    return (
-      <div className="dots_bg bg-zinc-900 min-h-screen flex justify-center items-center">
-        <form
-          action={Authentication.register}
-          className="bg-zinc-700 p-6 min-h-[50vh] min-w-[50%] max-w-[90%] flex-col gap-2 rounded-md flex justify-center shadow-md"
-        >
-          <div>
-            <h1 className="font-['STIX'] font-[700] text-[45px] w-[75%]">
-              alcuφ
-            </h1>
-            <p>
-              Create an account to start practicing adaptive physics problems.
-            </p>
-            {/* Error message */}
-            <p className="text-red-400">{message}</p>
-          </div>
-          <div className="gap-3 flex flex-col">
-            <div>
-              <label htmlFor="name">Name:</label>
-              <Input name="name" placeholder="Lambda" required />
-            </div>
-            <div>
-              <label htmlFor="name">Email:</label>
-              <Input
-                type="email"
-                name="email"
-                placeholder="hello@alcuphi.me"
-                required
-              />
-            </div>
-            <div>
-              <label htmlFor="name">Password:</label>
-              <Input
-                name="password"
-                placeholder="********"
-                type="password"
-                required
-              />
-            </div>
-          </div>
-          <div className="flex flex-col gap-2">
-            <Button type="submit" className="bg-zinc-800">Sign Up</Button>
-            <Link className="underline" href={"/account"}>
-              Have an account?
-            </Link>
-          </div>
-        </form>
-      </div>
-    );
-  }
+  const isRegister = (await searchParams).action === "register"
+  const message = (await searchParams).message
+
   return (
-    <div className="dots_bg bg-zinc-900 min-h-screen flex justify-center items-center">
-        <form
-          action={Authentication.login}
-          className="bg-zinc-700 p-6 min-h-[50vh] min-w-[50%] max-w-[90%] flex-col gap-2 rounded-md flex justify-center shadow-md"
-        >
-        <div>
-          <h1 className="font-['STIX'] font-[700] text-[45px] w-[75%]">
-            alcuφ
-          </h1>
-          <p>Login with your account</p>
-          {/* Error message */}
-          <p className="text-red-400">{message}</p>
-        </div>
-        <div className="gap-3 flex flex-col">
-          <Input
-            type="email"
-            name="email"
-            placeholder="hello@alcuphi.me"
-            required
-          />
-          <Input
-            name="password"
-            type="password"
-            placeholder="********"
-            required
-          />
-        </div>
-        <div className="flex flex-col gap-2">
-          <Button type="submit" className="bg-zinc-800">Login</Button>
-          <Link className="underline" href={"?action=register"}>
-            Don&apos;t have an account?
-          </Link>
-        </div>
-      </form>
+    <div className="min-h-screen flex items-center justify-center bg-zinc-900 bg-[radial-gradient(#3a3a3a_1px,transparent_1px)] bg-[size:20px_20px] p-4 relative overflow-hidden">
+      {/* Background decorative elements */}
+      <div className="absolute inset-0 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-800" />
+      <div className="absolute inset-0 bg-[radial-gradient(#3a3a3a_1px,transparent_1px)] bg-[size:20px_20px] opacity-50" />
+
+      {/* Animated background circles */}
+      <div
+        className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/5 rounded-full blur-3xl animate-pulse"
+        style={{ animationDuration: "8s" }}
+      />
+      <div
+        className="absolute bottom-1/4 right-1/3 w-64 h-64 bg-blue-600/5 rounded-full blur-3xl animate-pulse"
+        style={{ animationDuration: "12s" }}
+      />
+
+      <div className="w-full max-w-md z-10">
+        <AuthForm
+          isRegister={isRegister}
+          message={message}
+          loginAction={Authentication.login}
+          registerAction={Authentication.register}
+        />
+      </div>
     </div>
-  );
+  )
 }

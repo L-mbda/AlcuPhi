@@ -1,162 +1,175 @@
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { db } from "@/db/db"
-import { question, questionCollection, questionLog } from "@/db/schema";
-import { QuestionSection } from "@/lib/question"
-import { getSessionData } from "@/lib/session";
-import { and, count, eq, sql } from "drizzle-orm";
-import { BookOpen, Brain, History, Lightbulb, Pencil, Target } from "lucide-react"
-import { redirect } from "next/navigation";
+import { question, questionCollection, questionLog } from "@/db/schema"
+import { QuestionSection, RecentQuestions } from "@/lib/question"
+import { getSessionData } from "@/lib/session"
+import { and, count, eq, sql } from "drizzle-orm"
+import { History, Lightbulb, Target, Sparkles, ArrowRight, Clock, CheckCircle2 } from "lucide-react"
+import { redirect } from "next/navigation"
+export const dynamic = "force-dynamic";
 
 export default async function PlaySet({ params }: { params: Promise<{ id: string }> }) {
-  const connection = await db();
+  dynamic
+  const connection = await db()
   const id = (await params).id
-  const setID = await connection.select({id: questionCollection.id}).from(questionCollection).where(eq(questionCollection.publicID, id));
-  const session = (await getSessionData()).credentials;
+  const setID = await connection
+    .select({ id: questionCollection.id })
+    .from(questionCollection)
+    .where(eq(questionCollection.publicID, id))
+  const session = (await getSessionData()).credentials
+
   if (setID.length == 0) {
-    return redirect('/play');
+    return redirect("/play")
   }
 
-  const questionsCorrect = (await connection
-  .select({
-    correctCount: sql<number>`COUNT(*)`.mapWith(Number),
-  })
-  .from(questionLog)
-  .innerJoin(  question,
-    sql`${questionLog.questionID}::bigint = ${question.id}`)
-  .where(
-    and(
-      eq(questionLog.correct, true),       
-      eq(question.collectionID, setID[0].id), 
-      eq(question.type, "multipleChoice"),
-    ),
-  ))[0].correctCount | 1;
-  const totalQuestions = (await connection
-  .select({
-    totalQuestions: count(questionLog.id)
-  })
-  .from(questionLog)
-  .innerJoin(  question,
-    sql`${questionLog.questionID}::bigint = ${question.id}`)
-  .where(
-    and(
-      eq(questionLog.correct, true),       
-      eq(question.collectionID, setID[0].id), 
-      eq(question.type, "multipleChoice"),
-    ),
-  ))[0].totalQuestions | 1;
-  const questionsAttempted = await connection.select({
-    'attempts': count(questionLog.id),
-  }).from(questionLog).where(and(eq(questionLog.collectionID, setID[0].id),eq(questionLog.userID, session.id)))
+  const questionsCorrect =
+    (
+      await connection
+        .select({
+          correctCount: sql<number>`COUNT(*)`.mapWith(Number),
+        })
+        .from(questionLog)
+        .innerJoin(question, sql`${questionLog.questionID}::bigint = ${question.id}`)
+        .where(
+          and(
+            eq(questionLog.correct, true),
+            eq(question.collectionID, setID[0].id),
+            eq(question.type, "multipleChoice"),
+          ),
+        )
+    )[0].correctCount || 0
+
+  const totalQuestions =
+    (
+      await connection
+        .select({
+          totalQuestions: count(questionLog.id),
+        })
+        .from(questionLog)
+        .innerJoin(question, sql`${questionLog.questionID}::bigint = ${question.id}`)
+        .where(
+          and(
+            eq(questionLog.correct, true),
+            eq(question.collectionID, setID[0].id),
+            eq(question.type, "multipleChoice"),
+          ),
+        )
+    )[0].totalQuestions || 1
+
+  const questionsAttempted = await connection
+    .select({
+      attempts: count(questionLog.id),
+    })
+    .from(questionLog)
+    .where(and(eq(questionLog.collectionID, setID[0].id), eq(questionLog.userID, session.id)))
+
+  const accuracy = totalQuestions > 0 ? Math.round((questionsCorrect / totalQuestions) * 100) : 0
+
   return (
-    <div className="container py-10 text-white">
-      <div className="mb-8 ml-8">
-        <h1 className="text-3xl font-bold tracking-tight text-white">Practice</h1>
-        <p className="text-zinc-400">
-          Answer questions, track your progress, and focus on areas that need improvement.
-        </p>
-      </div>
-      <div className="flex flex-col items-center w-full">
-        <div className="grid grid-cols-1 md:grid-cols-6 lg:grid-cols-12 gap-4 auto-rows-min">
-            {/* Main question area - spans 8 columns on large screens, full width on smaller */}
-            <div className="md:col-span-6 lg:col-span-8 lg:row-span-2"><QuestionSection communityID={id} /></div>
+    <div className="min-h-screen bg-[#0A0A0A] text-white">
+      <div className="container py-8 px-4 max-w-7xl mx-auto">
+        <div className="mb-8 flex items-center">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight text-white">Practice</h1>
+            <p className="text-zinc-400">
+              Answer questions, track your progress, and focus on areas that need improvement.
+            </p>
+          </div>
+          <div className="ml-auto flex items-center gap-2 bg-zinc-800/50 px-4 py-2 rounded-full">
+            <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+            <span className="text-sm font-medium text-zinc-300">Session active</span>
+          </div>
+        </div>
 
-            {/* Focus selector - spans 4 columns on large screens */}
-            <div className="md:col-span-3 lg:col-span-4">{/* <FocusSelector /> */}</div>
+        {/* Bento Grid Layout */}
+        <div className="grid grid-cols-12 gap-4">
+          {/* Main question area */}
+          <div className="col-span-12 lg:col-span-8 row-span-1">
+            <QuestionSection communityID={id} />
+          </div>
 
-            {/* Stats card */}
-            <div className="md:col-span-3 lg:col-span-4">
-            <Card className="border-zinc-700 bg-zinc-800 h-full">
-                <CardHeader className="pb-2">
-                <CardTitle className="flex items-center text-white text-lg">
-                    <Target className="mr-2 h-5 w-5" />
-                    Progress Stats
+          {/* Progress Stats Card */}
+          <div className="col-span-12 lg:col-span-4 row-span-1">
+            <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20 h-full">
+              <CardHeader className="pb-2 border-b border-zinc-800">
+                <CardTitle className="flex items-center text-lg text-white">
+                  <Target className="mr-2 h-5 w-5 text-rose-400" />
+                  Progress Stats
                 </CardTitle>
-                <CardDescription className="text-zinc-400">Your recent performance metrics.
-                </CardDescription>
-                </CardHeader>
-                <CardContent className="flex flex-col gap-2">
+                <CardDescription className="text-zinc-400">Your recent performance metrics.</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
                 <div className="grid grid-cols-2 gap-4">
-                    <div className="flex flex-col items-center justify-center p-3 bg-zinc-700 rounded-lg">
-                    <span className="text-2xl font-bold text-white">{(questionsCorrect / totalQuestions)*100}%</span>
-                    <span className="text-xs text-zinc-400">Accuracy*</span>
+                  <div className="flex flex-col items-center justify-center p-4 bg-zinc-800/50 rounded-xl border border-zinc-700/50 backdrop-blur-sm">
+                    <div className="flex items-center justify-center w-12 h-12 mb-2">
+                      <span className="text-2xl font-bold text-white">{accuracy}%</span>
                     </div>
-                    <div className="flex flex-col items-center justify-center p-3 bg-zinc-700 rounded-lg">
-                    <span className="text-2xl font-bold text-white">{questionsAttempted[0].attempts}</span>
-                    <span className="text-xs text-zinc-400">Questions</span>
+                    <span className="text-sm text-zinc-300">Accuracy*</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-4 bg-zinc-800/50 rounded-xl border border-zinc-700/50 backdrop-blur-sm">
+                    <div className="flex items-center justify-center w-12 h-12  mb-2">
+                      <span className="text-2xl font-bold text-white">{questionsAttempted[0].attempts}</span>
                     </div>
+                    <span className="text-sm text-zinc-300">Questions</span>
+                  </div>
                 </div>
-                <p className="text-gray-400 text-[10px] italic">* multiple choice is only utilized for calculating accuracy</p>
-
-                </CardContent>
+                <p className="text-zinc-500 text-xs italic mt-4 text-center">
+                  * multiple choice is only utilized for calculating accuracy
+                </p>
+              </CardContent>
             </Card>
-            </div>
+          </div>
 
-            {/* Quick access cards */}
-            <div className="md:col-span-6 lg:col-span-4 grid grid-cols-2 gap-4">
-            <Card className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
-                <BookOpen className="h-8 w-8 mb-2 text-blue-400" />
-                <h3 className="font-medium text-white">Study Materials</h3>
-                <p className="text-xs text-zinc-400">Access lecture notes and resources</p>
-                </CardContent>
-            </Card>
+          {/* Recent Questions */}
+          <div className="col-span-12 lg:col-span-8 row-span-1">
+            <RecentQuestions />
+          </div>
 
-            <Card className="border-zinc-700 bg-zinc-800 hover:bg-zinc-700 transition-colors cursor-pointer">
-                <CardContent className="p-4 flex flex-col items-center justify-center text-center h-full">
-                <Brain className="h-8 w-8 mb-2 text-purple-400" />
-                <h3 className="font-medium text-white">Concept Maps</h3>
-                <p className="text-xs text-zinc-400">Visualize physics relationships</p>
-                </CardContent>
-            </Card>
-            </div>
-
-            {/* Question log - spans full width on mobile, 8 columns on large screens */}
-            <div className="md:col-span-6 lg:col-span-8">
-            <Card className="border-zinc-700 bg-zinc-800">
-                <CardHeader className="pb-2">
-                <CardTitle className="flex items-center text-white text-lg">
-                    <History className="mr-2 h-5 w-5" />
-                    Recent Questions
-                </CardTitle>
-                <CardDescription className="text-zinc-400">Your last 5 attempted questions</CardDescription>
-                </CardHeader>
-                <CardContent></CardContent>
-            </Card>
-            </div>
-
-            {/* Recommended practice */}
-            <div className="md:col-span-6 lg:col-span-4">
-            <Card className="border-zinc-700 bg-zinc-800 h-full">
-                <CardHeader className="pb-2">
-                <CardTitle className="flex items-center text-white text-lg">
-                    <Lightbulb className="mr-2 h-5 w-5 text-yellow-400" />
-                    Recommended Practice
+          {/* Recommended Practice */}
+          <div className="col-span-12 lg:col-span-4 row-span-1">
+            <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20 h-full">
+              <CardHeader className="pb-2 border-b border-zinc-800">
+                <CardTitle className="flex items-center text-lg text-white">
+                  <Lightbulb className="mr-2 h-5 w-5 text-amber-400" />
+                  Recommended Practice
                 </CardTitle>
                 <CardDescription className="text-zinc-400">Based on your performance</CardDescription>
-                </CardHeader>
-                <CardContent>
+              </CardHeader>
+              <CardContent className="p-4">
                 <div className="space-y-3">
-                    <div className="rounded-md border border-zinc-700 p-3 hover:bg-zinc-700 transition-colors cursor-pointer">
-                    <div className="font-medium flex items-center text-white">
-                        <Pencil className="h-4 w-4 mr-2 text-primary" />
+                  <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
+                    <div className="font-medium flex items-center justify-between text-white">
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 mr-3">
+                          <Sparkles className="h-4 w-4 text-white" />
+                        </div>
                         Kinematics Problems
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
                     </div>
-                    <div className="text-xs text-zinc-400 mt-1">Improve your understanding of motion equations</div>
+                    <div className="text-sm text-zinc-400 mt-2 ml-11">
+                      Improve your understanding of motion equations
                     </div>
-                    <div className="rounded-md border border-zinc-700 p-3 hover:bg-zinc-700 transition-colors cursor-pointer">
-                    <div className="font-medium flex items-center text-white">
-                        <Pencil className="h-4 w-4 mr-2 text-primary" />
+                  </div>
+
+                  <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
+                    <div className="font-medium flex items-center justify-between text-white">
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 mr-3">
+                          <Sparkles className="h-4 w-4 text-white" />
+                        </div>
                         Thermodynamics Quiz
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
                     </div>
-                    <div className="text-xs text-zinc-400 mt-1">Practice heat transfer and entropy concepts</div>
-                    </div>
+                    <div className="text-sm text-zinc-400 mt-2 ml-11">Practice heat transfer and entropy concepts</div>
+                  </div>
                 </div>
-                </CardContent>
+              </CardContent>
             </Card>
-            </div>
+          </div>
         </div>
       </div>
     </div>
   )
 }
-

@@ -4,9 +4,9 @@ import { MathRender } from "@/components/ui/math-renderer"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
-import { CheckCircle, XCircle, Loader2 } from "lucide-react"
+import { CheckCircle, XCircle, Loader2, History, Clock } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 
@@ -149,7 +149,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
 
   if (loading) {
     return (
-      <Card className="w-full bg-zinc-800 dark:bg-zinc-900 shadow-md">
+      <Card className="w-full bg-zinc-900 border-none shadow-none">
         <CardHeader className="border-b border-zinc-700 dark:border-zinc-800">
           <CardTitle className="text-white flex items-center">
             <div className="h-6 w-24 bg-zinc-700 rounded-md relative overflow-hidden animate-pulse" />
@@ -181,7 +181,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
 
   if (error) {
     return (
-      <Card className="w-full bg-zinc-800 dark:bg-zinc-900 shadow-md">
+      <Card className="w-full border-none shadow-none bg-zinc-900">
         <CardContent className="flex flex-col items-center justify-center py-8">
           <XCircle className="h-12 w-12 mb-4" color="#fd1010" />
           <p className="text-white">{error}</p>
@@ -191,14 +191,16 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
   }
 
   return (
-    <Card className="w-full bg-zinc-800 dark:bg-zinc-900 shadow-md hover:shadow-lg transition-shadow duration-300">
-      <CardHeader className="border-b border-zinc-700 dark:border-zinc-800">
+    <Card className="w-full border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
+      <CardHeader className="border-b border-zinc-800">
         <CardTitle className="text-white">
-          <Badge className="p-2">{question?.type === "multipleChoice" ? "Multiple Choice" : "Free Response"}</Badge>
+          <Badge className="bg-zinc-800/80 hover:bg-zinc-800 text-white border-none px-3 py-1.5 rounded-lg">
+            {question?.type === "multipleChoice" ? "Multiple Choice" : "Free Response"}
+          </Badge>
         </CardTitle>
       </CardHeader>
       <CardContent className="pt-6 pb-4">
-        <div className="mb-6 text-white mb-8">
+        <div className="mb-8 text-white">
           <MathRender text={question?.questionName} />
         </div>
 
@@ -219,26 +221,27 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
                   onClick={() => {
                     if (!submitted) setSelectedAnswer(value)
                   }}
-                  className={`flex items-center space-x-2 rounded-full border border-zinc-700 p-4 transition-colors cursor-pointer
-                    ${selectedAnswer === value ? "bg-white" : ""}
-                    ${isCorrectAnswer ? "bg-green-900/40 border-green-700" : ""}
-                    ${submitted && !submitting && selectedAnswer === value && !isCorrectAnswer ? "bg-red-900/40 border-red-700" : ""}
+                  className={`flex items-center space-x-2 rounded-full border p-4 transition-all cursor-pointer
+                    ${!submitted ? "border-zinc-700/50 hover:bg-zinc-800/50" : "border-zinc-700"}
+                    ${selectedAnswer === value && !submitted ? "bg-zinc-800/50" : ""}
+                    ${isCorrectAnswer ? "bg-green-900/30 border-green-700/70" : ""}
+                    ${submitted && !submitting && selectedAnswer === value && !isCorrectAnswer ? "bg-red-900/30 border-red-700/70" : ""}
                   `}
                 >
                   <RadioGroupItem
                     value={value}
                     id={value}
-                    className={`border ${selectedAnswer === value ? "border-black" : "border-white"}`}
+                    className={`border ${selectedAnswer === value ? "border-rose-400" : "border-white"}`}
                   />
                   <Label
                     htmlFor={value}
-                    className={`flex-grow cursor-pointer ${selectedAnswer === value ? "text-gray-100" : "text-white"}`}
+                    className="flex-grow cursor-pointer text-white"
                   >
                     <MathRender text={answerOption.split("=")[1]} />
                   </Label>
-                  {isCorrectAnswer && <CheckCircle className="h-5 w-5 ml-2" color="#49ff33" />}
+                  {isCorrectAnswer && <CheckCircle className="h-5 w-5 ml-2 text-emerald-400" />}
                   {submitted && !submitting && selectedAnswer === value && !isCorrectAnswer && (
-                    <XCircle className="h-5 w-5 ml-2" color="#fd1010" />
+                    <XCircle className="h-5 w-5 ml-2 text-red-400" />
                   )}
                 </div>
               )
@@ -250,7 +253,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
           <div className="space-y-4">
             <Textarea
               placeholder="Enter your answer here..."
-              className="bg-zinc-700 border-zinc-600 text-white placeholder:text-zinc-400"
+              className="bg-zinc-800/50 border-zinc-700/50 text-white placeholder:text-zinc-400 rounded-xl focus:ring-rose-400 focus:border-rose-400"
               style={{ height: "200px", resize: "none" }}
               value={freeResponseAnswer}
               onChange={(e) => setFreeResponseAnswer(e.target.value)}
@@ -258,7 +261,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
             />
 
             {submitted && (
-              <div className="p-4 rounded-md border border-zinc-600 bg-zinc-700">
+              <div className="p-4 rounded-xl border border-zinc-700/50 bg-zinc-800/50 backdrop-blur-sm">
                 <h3 className="text-white font-medium mb-2">Your Response:</h3>
                 <p className="text-white text-sm">{freeResponseAnswer}</p>
               </div>
@@ -267,7 +270,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
         )}
 
         {submitted && !submitting && (
-          <div className="mt-8 p-4 rounded-md bg-zinc-700 border border-zinc-600">
+          <div className="mt-8 p-4 rounded-xl bg-zinc-800/50 border border-zinc-700/50 backdrop-blur-sm">
             {question?.type === "multipleChoice" ? (
               <>
                 <h3 className="text-white font-medium mb-2">
@@ -276,7 +279,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
                 <div className="text-white space-y-2">
                   {correctAnswerIndices.map((index, i) => (
                     <div key={i} className="flex items-center">
-                      <CheckCircle className="h-4 w-4 mr-2" color="#49ff33" />
+                      <CheckCircle className="h-4 w-4 mr-2 text-emerald-400" />
                       <MathRender text={question?.answerChoices[index].split("=")[1]} />
                     </div>
                   ))}
@@ -296,7 +299,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
           </div>
         )}
       </CardContent>
-      <CardFooter className="border-t border-zinc-700 dark:border-zinc-800 pt-4 flex justify-end">
+      <CardFooter className="border-t border-zinc-800 pt-4 flex justify-end">
         {!submitted ? (
           <Button
             onClick={handleSubmit}
@@ -305,7 +308,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
               (question?.type === "freeResponse" && !freeResponseAnswer.trim()) ||
               loading
             }
-            className="rounded-full"
+            className="bg-gradient-to-r from-rose-500 to-pink-600 hover:from-rose-600 hover:to-pink-700 text-white rounded-lg p-3 px-6 border-none"
           >
             {loading ? (
               <>
@@ -320,7 +323,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
           <Button
             onClick={handleNextQuestion}
             disabled={submitting}
-            className="hover:bg-blue-500 text-white rounded-full"
+            className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white rounded-lg p-3 px-6 border-none"
           >
             {submitting ? (
               <>
@@ -333,6 +336,33 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
           </Button>
         )}
       </CardFooter>
+    </Card>
+  )
+}
+
+export function RecentQuestions() {
+  return (
+    <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
+      <CardHeader className="pb-2 border-b border-zinc-800">
+        <CardTitle className="flex items-center justify-between text-lg text-white">
+          <div className="flex items-center">
+            <History className="mr-2 h-5 w-5 text-cyan-400" />
+            Recent Questions
+          </div>
+          <button className="text-zinc-400 hover:text-white text-sm flex items-center transition-colors">
+            <Clock className="h-4 w-4 mr-1" /> View all
+          </button>
+        </CardTitle>
+        <CardDescription className="text-zinc-400">Your last 5 attempted questions</CardDescription>
+      </CardHeader>
+      <CardContent className="p-0">
+        <div className="divide-y divide-zinc-800">
+          <div className="p-4 hover:bg-zinc-800/30 transition-colors">
+            <p className="text-zinc-300 font-medium">No recent questions found</p>
+            <p className="text-zinc-500 text-sm mt-1">Start answering questions to see your history</p>
+          </div>
+        </div>
+      </CardContent>
     </Card>
   )
 }
