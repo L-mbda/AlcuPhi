@@ -9,7 +9,9 @@ import { useEffect, useState } from "react"
 import { CheckCircle, XCircle, Loader2, History, Clock } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-
+import { get } from "http"
+import { format } from "util"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 // Interface
 interface Question {
   id: number
@@ -201,6 +203,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
       </CardHeader>
       <CardContent className="pt-6 pb-4">
         <div className="mb-8 text-white">
+          {/* @ts-expect-error Expected since we know that it would occur */}
           <MathRender text={question?.questionName} />
         </div>
 
@@ -241,7 +244,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
                   </Label>
                   {isCorrectAnswer && <CheckCircle className="h-5 w-5 ml-2 text-emerald-400" />}
                   {submitted && !submitting && selectedAnswer === value && !isCorrectAnswer && (
-                    <XCircle className="h-5 w-5 ml-2 text-red-400" />
+                    <XCircle className="h-5 w-5 ml-2" color="#fd1010" />
                   )}
                 </div>
               )
@@ -340,29 +343,213 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
   )
 }
 
-export function RecentQuestions() {
+type QuestionType = {
+  correct: boolean
+  timestamp: string
+  type: string
+  name: string
+  answerChoices: string[]
+  correctAnswer: string[]
+  response: string
+}
+
+export function RecentQuestions({ collectionID }: { collectionID: string }) {
+  const [questions, setQuestions] = useState<QuestionType[]>([])
+  const [limit, setLimit] = useState(5)
+  const [isLoading, setIsLoading] = useState(true)
+  const [modalOpen, setModalOpen] = useState(false)
+  const [allQuestions, setAllQuestions] = useState<QuestionType[]>([])
+
+  useEffect(() => {
+    async function fetchQuestions() {
+      setIsLoading(true)
+      try {
+        const data = await (
+          await fetch("/api/question", {
+            method: "POST",
+            body: JSON.stringify({
+              type: "GET_DATA",
+              limit: limit,
+              collectionID: collectionID,
+            }),
+          })
+        ).json()
+
+        if (data.message === "success") {
+          setQuestions(data.response || [])
+        }
+      } catch (error) {
+        console.error("Error fetching questions:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    fetchQuestions()
+  }, [limit, collectionID])
+
+  const fetchAllQuestions = async () => {
+    try {
+      const data = await (
+        await fetch("/api/question", {
+          method: "POST",
+          body: JSON.stringify({
+            type: "GET_DATA",
+            limit: 100, // Fetch more questions for the modal
+            collectionID: collectionID,
+          }),
+        })
+      ).json()
+
+      if (data.message === "success") {
+        setAllQuestions(data.response || [])
+      }
+    } catch (error) {
+      console.error("Error fetching all questions:", error)
+    }
+  }
+
+  const handleViewAll = () => {
+    fetchAllQuestions()
+    setModalOpen(true)
+  }
+
+  // Helper function to decode URL encoded text
+  const decodeText = (text: string) => {
+    if (text.startsWith("text=")) {
+      return decodeURIComponent(text.substring(5))
+    }
+    return text
+  }
+
+  // Helper function to format timestamp
+  const formatTimestamp = (timestamp: string) => {
+    return format(new Date(Number.parseInt(timestamp)).toLocaleString())
+  }
+
+  // Return statement
   return (
-    <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
-      <CardHeader className="pb-2 border-b border-zinc-800">
-        <CardTitle className="flex items-center justify-between text-lg text-white">
-          <div className="flex items-center">
-            <History className="mr-2 h-5 w-5 text-cyan-400" />
-            Recent Questions
+    <>
+      <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
+        <CardHeader className="pb-2 border-b border-zinc-800">
+          <CardTitle className="flex items-center justify-between text-lg text-white">
+            <div className="flex items-center">
+              <History className="mr-2 h-5 w-5 text-cyan-400" />
+              Recent Questions
+            </div>
+            <button
+              onClick={handleViewAll}
+              className="text-zinc-400 hover:text-white text-sm flex items-center transition-colors"
+            >
+              <Clock className="h-4 w-4 mr-1" /> View info
+            </button>
+          </CardTitle>
+          <CardDescription className="text-zinc-400">Your last {limit} attempted questions</CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          {isLoading ? (
+            <div className="p-4">
+              <p className="text-zinc-300">Loading questions...</p>
+            </div>
+          ) : questions && questions.length > 0 ? (
+            <div className="divide-y divide-zinc-800">
+              {questions.map((question, index) => (
+                <div key={index} className="p-4 hover:bg-zinc-800/30 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <p className="text-zinc-300 font-medium"><MathRender text={question.name} /></p>
+                      <p className="text-zinc-500 text-sm mt-1">{formatTimestamp(question.timestamp)}</p>
+                    </div>
+                    <div className="flex items-center">
+                      {question.correct ? (
+                        <CheckCircle className="h-5 w-5" color=" #4ade80"/>
+                      ) : (
+                        <XCircle className="h-5 w-5" color="#ef4444" />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-4 hover:bg-zinc-800/30 transition-colors">
+              <p className="text-zinc-300 font-medium">No recent questions found</p>
+              <p className="text-zinc-500 text-sm mt-1">Start answering questions to see your history</p>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="sm:max-w-[600px] bg-zinc-900 text-white border-zinc-800">
+          <DialogHeader>
+            <DialogTitle className="text-xl flex items-center">
+              <History className="mr-2 h-5 w-5 text-cyan-400" />
+              Specifics
+            </DialogTitle>
+          </DialogHeader>
+          <div className="max-h-[70vh] overflow-y-auto">
+            {allQuestions.length > 0 ? (
+              <div className="divide-y divide-zinc-800">
+                {allQuestions.map((question, index) => (
+                  <div key={index} className="py-4">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <p className="text-zinc-300 font-medium"><MathRender text={question.name} /></p>
+                        <p className="text-zinc-500 text-sm">{formatTimestamp(question.timestamp)}</p>
+                      </div>
+                      <div className="flex items-center">
+                        {question.correct ? (
+                          <div className="flex items-center">
+                            <CheckCircle className="h-5 w-5 mr-1" color="#22c55e" />
+                            <span>Correct</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center">
+                            <XCircle className="h-5 w-5 mr-1" color="#ef4444" />
+                            <span color="#ef4444">Incorrect</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="mt-2 bg-zinc-800/50 p-3 rounded-lg">
+                      <p className="text-zinc-400 text-sm mb-2">Answer choices:</p>
+                      <ul className="space-y-1">
+                        {question.answerChoices.map((choice, choiceIndex) => {
+                          const isCorrect = question.correctAnswer.includes(`option-${choiceIndex}`)
+                          const isSelected = question.response === `option-${choiceIndex}`
+
+                          return (
+                            <li
+                              key={choiceIndex}
+                              className={`flex items-center text-sm p-1 rounded ${
+                                isCorrect
+                                  ? "text-green-400"
+                                  : isSelected && !isCorrect
+                                    ? "text-red-400"
+                                    : "text-zinc-300"
+                              }`}
+                            >
+                              {isCorrect && <CheckCircle className="h-4 w-4 mr-1" />}
+                              {isSelected && !isCorrect && <XCircle className="h-4 w-4 mr-1" />}
+                              {decodeText(choice)}
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="p-4 text-center">
+                <p className="text-zinc-300">No questions found</p>
+              </div>
+            )}
           </div>
-          <button className="text-zinc-400 hover:text-white text-sm flex items-center transition-colors">
-            <Clock className="h-4 w-4 mr-1" /> View all
-          </button>
-        </CardTitle>
-        <CardDescription className="text-zinc-400">Your last 5 attempted questions</CardDescription>
-      </CardHeader>
-      <CardContent className="p-0">
-        <div className="divide-y divide-zinc-800">
-          <div className="p-4 hover:bg-zinc-800/30 transition-colors">
-            <p className="text-zinc-300 font-medium">No recent questions found</p>
-            <p className="text-zinc-500 text-sm mt-1">Start answering questions to see your history</p>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+        </DialogContent>
+      </Dialog>
+    </>
   )
 }

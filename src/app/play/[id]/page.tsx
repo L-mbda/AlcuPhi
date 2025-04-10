@@ -4,7 +4,7 @@ import { question, questionCollection, questionLog } from "@/db/schema"
 import { QuestionSection, RecentQuestions } from "@/lib/question"
 import { getSessionData } from "@/lib/session"
 import { and, count, eq, sql } from "drizzle-orm"
-import { History, Lightbulb, Target, Sparkles, ArrowRight, Clock, CheckCircle2 } from "lucide-react"
+import { Lightbulb, Target, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react"
 import { redirect } from "next/navigation"
 export const dynamic = "force-dynamic";
 
@@ -23,8 +23,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
   }
 
   const questionsCorrect =
-    (
-      await connection
+      (await connection
         .select({
           correctCount: sql<number>`COUNT(*)`.mapWith(Number),
         })
@@ -36,8 +35,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
             eq(question.collectionID, setID[0].id),
             eq(question.type, "multipleChoice"),
           ),
-        )
-    )[0].correctCount || 0
+        ))[0].correctCount || 0;
 
   const totalQuestions =
     (
@@ -49,7 +47,6 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
         .innerJoin(question, sql`${questionLog.questionID}::bigint = ${question.id}`)
         .where(
           and(
-            eq(questionLog.correct, true),
             eq(question.collectionID, setID[0].id),
             eq(question.type, "multipleChoice"),
           ),
@@ -62,7 +59,6 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
     })
     .from(questionLog)
     .where(and(eq(questionLog.collectionID, setID[0].id), eq(questionLog.userID, session.id)))
-
   const accuracy = totalQuestions > 0 ? Math.round((questionsCorrect / totalQuestions) * 100) : 0
 
   return (
@@ -122,7 +118,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
 
           {/* Recent Questions */}
           <div className="col-span-12 lg:col-span-8 row-span-1">
-            <RecentQuestions />
+            <RecentQuestions collectionID={id} />
           </div>
 
           {/* Recommended Practice */}
