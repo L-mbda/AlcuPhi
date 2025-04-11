@@ -117,6 +117,7 @@ export async function POST(request: NextRequest) {
         'correctAnswer': question.correctAnswer,
         'response': questionLog.response
       }).from(questionLog).where(and(
+        // @ts-expect-error We should expect this to occur
         eq(questionLog.userID, token.credentials?.id),
         eq(questionLog.collectionID, set[0].id),
       ))

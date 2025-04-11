@@ -6,15 +6,17 @@ import { redirect } from "next/navigation"
 export default async function AccountPage({
   searchParams,
 }: {
-  searchParams: { action?: string; message?: string }
+  searchParams: Promise<{ action?: string; message?: string }>
 }) {
   // Check if user is already authenticated and redirect
   if ((await cookies()).get("header") !== undefined) {
     redirect("/dashboard")
   }
 
-  const isRegister = (await searchParams).action === "register"
-  const message = (await searchParams).message
+  // Await the searchParams promise
+  const params = await searchParams
+  const isRegister = params.action === "register"
+  const message = params.message
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-zinc-900 bg-[radial-gradient(#3a3a3a_1px,transparent_1px)] bg-[size:20px_20px] p-4 relative overflow-hidden">

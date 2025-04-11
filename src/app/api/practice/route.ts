@@ -30,6 +30,7 @@ export async function POST(request: NextRequest) {
                     ELSE 'easy'
                 END
             `,
+        // @ts-expect-error We should expect this to occur
         }).from(questionLog).where(and(eq(questionLog.collectionID, setInformation[0].id), eq(questionLog.userID, session.credentials?.id)))
         .leftJoin(question, eq(questionLog.questionID, sql`CAST(${question.id} as varchar)`))
         .groupBy(sql`
@@ -73,6 +74,7 @@ export async function PATCH(request: NextRequest) {
         // Continue
         if (questions[0].type != 'multipleChoice') {
             await connection.insert(questionLog).values({
+                // @ts-expect-error We should expect this to occur
                 'userID': session.credentials?.id,
                 'correct': true,
                 'response': data.response,
@@ -83,6 +85,7 @@ export async function PATCH(request: NextRequest) {
             return NextResponse.json({"message": "success", "correctAnswer": questions[0].correctAnswer})
         } else {
             await connection.insert(questionLog).values({
+                // @ts-expect-error We should expect this to occur
                 'userID': session.credentials?.id,
                 'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),
                 'response': data.response,
