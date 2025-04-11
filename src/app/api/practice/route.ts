@@ -92,9 +92,23 @@ export async function PATCH(request: NextRequest) {
                 'timestamp': (new Date()).getTime(),
                 'questionID': questions[0].id,
                 'collectionID': questions[0].collectionID,
-            })            
+            })
+            // Check logs
+            const questionLogs = await connection.select({
+                totalAttempts: count(questionLog.timestamp)
+            // @ts-expect-error Expected
+            }).from(questionLog).where(eq(questionLog.questionID,questions[0].id));
+            const correctLogs = await connection.select({
+                correct: count(questionLog.correct)
+            // @ts-expect-error Expected
+            }).from(questionLog).where(and(eq(questionLog.questionID,questions[0].id), eq(questionLog.correct, true)));
+            // Update question difficulty regardless of any action
+            await connection.update(question).set({
+                'difficulty': 10-(correctLogs[0].correct/questionLogs[0].totalAttempts)*10
+            }).where(eq(question.id, questions[0].id));
+            // Else
             return NextResponse.json({"message": "success",
-                "correctAnswer": questions[0].correctAnswer, 'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1)))})
+            "correctAnswer": questions[0].correctAnswer, 'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1)))})
         }
     }
     return NextResponse.json({"message": "error"})

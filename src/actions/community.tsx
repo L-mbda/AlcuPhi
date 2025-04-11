@@ -1,7 +1,7 @@
 "use server";
 
 import { db } from "@/db/db";
-import { question, questionCollection } from "@/db/schema";
+import { question, questionCollection, questionLog } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -26,6 +26,8 @@ export async function deleteQuestion(id: number) {
       if (qset.length != 0 && (qset[0].creatorID == session.credentials?.id || session.credentials?.role != 'user')) {
         // Delete
         await (await db()).delete(question).where(eq(question.id, id));
+          // @ts-expect-error Expected since it doesn't know
+        await (await db()).delete(questionLog).where(eq(questionLog.questionID, id))
         return redirect("/set/" + qset[0].publicID);
       }
     }

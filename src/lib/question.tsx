@@ -6,12 +6,12 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
-import { CheckCircle, XCircle, Loader2, History, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, History, Clock, FileQuestion, Circle, X } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { get } from "http"
 import { format } from "util"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 // Interface
 interface Question {
   id: number
@@ -343,6 +343,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
   )
 }
 
+
 type QuestionType = {
   correct: boolean
   timestamp: string
@@ -352,6 +353,29 @@ type QuestionType = {
   correctAnswer: string[]
   response: string
 }
+
+
+// Custom scrollbar styles
+const customScrollbarStyles = `
+  .custom-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(113, 113, 122, 0.3) rgba(24, 24, 27, 0.1);
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: rgba(24, 24, 27, 0.1);
+    border-radius: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(113, 113, 122, 0.3);
+    border-radius: 8px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    background: rgba(113, 113, 122, 0.5);
+  }
+`
 
 export function RecentQuestions({ collectionID }: { collectionID: string }) {
   const [questions, setQuestions] = useState<QuestionType[]>([])
@@ -424,12 +448,16 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
 
   // Helper function to format timestamp
   const formatTimestamp = (timestamp: string) => {
-    return format(new Date(Number.parseInt(timestamp)).toLocaleString())
+    const date = new Date(Number.parseInt(timestamp))
+    return `${date.toLocaleString()}`
   }
 
   // Return statement
   return (
     <>
+      <style jsx global>
+        {customScrollbarStyles}
+      </style>
       <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20">
         <CardHeader className="pb-2 border-b border-zinc-800">
           <CardTitle className="flex items-center justify-between text-lg text-white">
@@ -457,12 +485,59 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
                 <div key={index} className="p-4 hover:bg-zinc-800/30 transition-colors">
                   <div className="flex items-start justify-between">
                     <div>
-                      <p className="text-zinc-300 font-medium"><MathRender text={question.name} /></p>
+                      <p className="text-zinc-300 font-medium">
+                        <MathRender text={question.name} />
+                      </p>
                       <p className="text-zinc-500 text-sm mt-1">{formatTimestamp(question.timestamp)}</p>
+                      {question.type === "multipleChoice" && (
+                        <div className="mt-2">
+                          <p className="text-zinc-400 text-xs mb-1">Answer choices:</p>
+                          <ul className="space-y-1 mt-1">
+                            {question.answerChoices
+                              .map((choice, choiceIndex) => {
+                                const correctOptionIndex = question.correctAnswer.map((option) => {
+                                  const match = option.match(/option-(\d+)/)
+                                  return match ? Number.parseInt(match[1]) : -1
+                                })
+
+                                const isCorrect = correctOptionIndex.includes(choiceIndex + 1)
+                                const isSelected = question.response === `option-${choiceIndex}`
+
+                                if (isCorrect || isSelected) {
+                                  return (
+                                    <li
+                                      key={choiceIndex}
+                                      className={`text-xs py-1 px-2 rounded ${
+                                        isCorrect
+                                          ? "bg-green-950/40 text-green-300"
+                                          : isSelected
+                                            ? "bg-red-950/40 text-red-300"
+                                            : ""
+                                      }`}
+                                    >
+                                      {isCorrect && <CheckCircle className="inline h-3 w-3 mr-1 text-green-500" color="#22c55e" />}
+                                      {isSelected && !isCorrect && (
+                                        <XCircle className="inline h-3 w-3 mr-1 text-red-500" />
+                                      )}
+                                      <span className="text-white">
+                                      {decodeText(choice)}
+                                      </span>                                      
+                                    </li>
+                                  )
+                                }
+                                return null
+                              })
+                              .filter(Boolean)}
+                          </ul>
+                        </div>
+                      )}
+                      {question.type === "freeResponse" && (
+                        <p className="text-zinc-400 text-xs mt-1">Free response: "{question.response}"</p>
+                      )}
                     </div>
                     <div className="flex items-center">
                       {question.correct ? (
-                        <CheckCircle className="h-5 w-5" color=" #4ade80"/>
+                        <CheckCircle className="h-5 w-5" color=" #4ade80" />
                       ) : (
                         <XCircle className="h-5 w-5" color="#ef4444" />
                       )}
@@ -481,72 +556,122 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
       </Card>
 
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
-        <DialogContent className="sm:max-w-[600px] bg-zinc-900 text-white border-zinc-800">
-          <DialogHeader>
-            <DialogTitle className="text-xl flex items-center">
-              <History className="mr-2 h-5 w-5 text-cyan-400" />
-              Specifics
-            </DialogTitle>
-          </DialogHeader>
-          <div className="max-h-[70vh] overflow-y-auto">
-            {allQuestions.length > 0 ? (
-              <div className="divide-y divide-zinc-800">
-                {allQuestions.map((question, index) => (
-                  <div key={index} className="py-4">
-                    <div className="flex items-start justify-between mb-2">
+        <DialogContent className=" p-0 bg-zinc-950 border border-zinc-800 rounded-none overflow-hidden">
+          <div className="flex items-center justify-between p-4 border-b border-zinc-800/40">
+            <div className="flex items-center text-white text-xl">
+              <History className="mr-2 h-5 w-5" />
+              Question History
+            </div>
+          </div>
+
+          <div className="custom-scrollbar overflow-y-auto" style={{ maxHeight: "calc(90vh - 60px)" }}>
+            <div className="p-4 space-y-4">
+              {allQuestions.length > 0 ? (
+                allQuestions.map((question, index) => (
+                  <div key={index} className="bg-zinc-900 rounded-md border border-zinc-800 overflow-hidden">
+                    <div className="p-4 flex items-start justify-between">
                       <div>
-                        <p className="text-zinc-300 font-medium"><MathRender text={question.name} /></p>
-                        <p className="text-zinc-500 text-sm">{formatTimestamp(question.timestamp)}</p>
+                        <p className="text-white font-medium text-lg">
+                          <MathRender text={question.name} />
+                        </p>
+                        <p className="text-zinc-500 text-xs mt-1">
+                          <Clock className="h-3 w-3 mr-1 inline" /> {formatTimestamp(question.timestamp)}
+                        </p>
                       </div>
                       <div className="flex items-center">
-                        {question.correct ? (
-                          <div className="flex items-center">
-                            <CheckCircle className="h-5 w-5 mr-1" color="#22c55e" />
+                        {question.correct && (
+                          <div className="flex items-center text-green-400">
+                            <CheckCircle className="h-5 w-5 mr-1" />
                             <span>Correct</span>
-                          </div>
-                        ) : (
-                          <div className="flex items-center">
-                            <XCircle className="h-5 w-5 mr-1" color="#ef4444" />
-                            <span color="#ef4444">Incorrect</span>
                           </div>
                         )}
                       </div>
                     </div>
 
-                    <div className="mt-2 bg-zinc-800/50 p-3 rounded-lg">
-                      <p className="text-zinc-400 text-sm mb-2">Answer choices:</p>
-                      <ul className="space-y-1">
-                        {question.answerChoices.map((choice, choiceIndex) => {
-                          const isCorrect = question.correctAnswer.includes(`option-${choiceIndex}`)
-                          const isSelected = question.response === `option-${choiceIndex}`
+                    <div className="px-4 pb-4">
+                      {question.type === "multipleChoice" ? (
+                        <>
+                          <p className="text-zinc-400 text-sm mb-3">Answer choices</p>
+                          <ul className="space-y-2">
+                            {question.answerChoices.map((choice, choiceIndex) => {
+                              const correctOptionIndex = question.correctAnswer.map((option) => {
+                                const match = option.match(/option-(\d+)/)
+                                return match ? Number.parseInt(match[1]) : -1
+                              })
 
-                          return (
-                            <li
-                              key={choiceIndex}
-                              className={`flex items-center text-sm p-1 rounded ${
-                                isCorrect
-                                  ? "text-green-400"
-                                  : isSelected && !isCorrect
-                                    ? "text-red-400"
-                                    : "text-zinc-300"
-                              }`}
-                            >
-                              {isCorrect && <CheckCircle className="h-4 w-4 mr-1" />}
-                              {isSelected && !isCorrect && <XCircle className="h-4 w-4 mr-1" />}
-                              {decodeText(choice)}
-                            </li>
-                          )
-                        })}
-                      </ul>
+                              const isCorrect = correctOptionIndex.includes(choiceIndex + 1)
+                              const isSelected = question.response === `option-${choiceIndex}`
+
+                              return (
+                                <li
+                                  key={choiceIndex}
+                                  className={`flex items-center text-sm p-2 rounded-md ${
+                                    isCorrect
+                                      ? "bg-green-950/40 border border-green-700/50"
+                                      : isSelected && !isCorrect
+                                        ? "bg-red-950/40 border border-red-700/50"
+                                        : "bg-zinc-800/30"
+                                  }`}
+                                >
+                                  <div className="mr-2 flex-shrink-0">
+                                    {isSelected ? (
+                                      isCorrect ? (
+                                        <CheckCircle className="h-4 w-4 text-green-500" />
+                                      ) : (
+                                        <XCircle className="h-4 w-4 text-red-500" />
+                                      )
+                                    ) : isCorrect ? (
+                                      <CheckCircle className="h-4 w-4 text-green-500" />
+                                    ) : (
+                                      <Circle className="h-4 w-4 text-zinc-600" />
+                                    )}
+                                  </div>
+                                  <span
+                                    className={`${isCorrect ? "text-green-300 font-medium" : isSelected && !isCorrect ? "text-red-300" : "text-zinc-300"}`}
+                                  >
+                                    {decodeText(choice)}
+                                  </span>
+                                  {isCorrect && (
+                                    <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                                      Correct Answer
+                                    </span>
+                                  )}
+                                </li>
+                              )
+                            })}
+                          </ul>
+                        </>
+                      ) : question.type === "freeResponse" ? (
+                        <>
+                          <p className="text-zinc-400 text-sm mb-3">Free Response Question</p>
+                          <div className="space-y-4">
+                            <div>
+                              <p className="text-zinc-400 text-xs mb-1">Your answer:</p>
+                              <p className="text-white">
+                                <MathRender text={question.response} />
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-zinc-400 text-xs mb-1">Expected answer:</p>
+                              <p className="text-white">
+                                <MathRender text={question.correctAnswer[0]} />
+                              </p>
+                            </div>
+                          </div>
+                        </>
+                      ) : (
+                        <p className="text-zinc-400">Unknown question type</p>
+                      )}
                     </div>
                   </div>
-                ))}
-              </div>
-            ) : (
-              <div className="p-4 text-center">
-                <p className="text-zinc-300">No questions found</p>
-              </div>
-            )}
+                ))
+              ) : (
+                <div className="flex flex-col items-center justify-center py-10 text-center">
+                  <p className="text-zinc-300 font-medium">No questions found</p>
+                  <p className="text-zinc-500 text-sm mt-1">Start answering questions to build your history</p>
+                </div>
+              )}
+            </div>
           </div>
         </DialogContent>
       </Dialog>
