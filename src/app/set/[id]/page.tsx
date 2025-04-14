@@ -137,14 +137,15 @@ export default async function Page({
                           );
                           // Compartmentalized Rendering
                           return (
-                            <>
+                            <div className="flex flex-row gap-2 items-center">
+                              <Check size={18} />
                               <MathRender
                                 text={
-                                  question.answerChoices[identity - 1]
+                                  question.answerChoices[identity - 1].split('=')[1]
                                 }
                                 key={id}
                               />
-                            </>
+                            </div>
                           );
                         }
                         return <MathRender text={answerChoice} key={id} />;

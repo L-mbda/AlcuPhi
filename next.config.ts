@@ -6,6 +6,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: ["localhost:3000", "*.github.dev"],
     },
+    optimizePackageImports: ['drizzle-orm','drizzle-orm/node-postgres'], 
   },
 };
 

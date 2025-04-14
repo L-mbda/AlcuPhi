@@ -507,7 +507,7 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
                                   return (
                                     <li
                                       key={choiceIndex}
-                                      className={`text-xs py-1 px-2 rounded ${
+                                      className={`text-xs py-1 px-2 rounded flex items-center ${
                                         isCorrect
                                           ? "bg-green-950/40 text-green-300"
                                           : isSelected
@@ -519,9 +519,7 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
                                       {isSelected && !isCorrect && (
                                         <XCircle className="inline h-3 w-3 mr-1 text-red-500" />
                                       )}
-                                      <span className="text-white">
-                                      {decodeText(choice)}
-                                      </span>                                      
+                                      <MathRender text={decodeText(choice)} />                                    
                                     </li>
                                   )
                                 }
@@ -613,7 +611,7 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
                                         : "bg-zinc-800/30"
                                   }`}
                                 >
-                                  <div className="mr-2 flex-shrink-0">
+                                  <div className="mr-2 flex-shrink-0 flex justify-center">
                                     {isSelected ? (
                                       isCorrect ? (
                                         <CheckCircle className="h-4 w-4 text-green-500" />
@@ -626,11 +624,9 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
                                       <Circle className="h-4 w-4 text-zinc-600" />
                                     )}
                                   </div>
-                                  <span
-                                    className={`${isCorrect ? "text-green-300 font-medium" : isSelected && !isCorrect ? "text-red-300" : "text-zinc-300"}`}
-                                  >
-                                    {decodeText(choice)}
-                                  </span>
+                                  <MathRender
+                                    text={decodeText(choice)}
+                                  />
                                   {isCorrect && (
                                     <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
                                       Correct Answer

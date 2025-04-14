@@ -1,7 +1,7 @@
 import { db } from "@/db/db";
 import { question, questionCollection, questionLog } from "@/db/schema";
 import { getSessionData } from "@/lib/session";
-import { and, count, eq, lt, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, lt, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -21,17 +21,22 @@ export async function POST(request: NextRequest) {
             })
         }
         // Define info
-        const questionSetLogs = await (connection).select({
-            'correctAnswers': count(questionLog.correct),
-            'difficulty': sql`
-                CASE
-                    WHEN ${question.difficulty} > 7 THEN 'difficult'
-                    WHEN ${question.difficulty} > 4 THEN 'medium'
-                    ELSE 'easy'
-                END
-            `,
+        const questionSetCount = await (connection).select({
+            'totalAnswers': count(questionLog.correct),            
         // @ts-expect-error We should expect this to occur
         }).from(questionLog).where(and(eq(questionLog.collectionID, setInformation[0].id), eq(questionLog.userID, session.credentials?.id)))
+        .leftJoin(question, eq(questionLog.questionID, sql`CAST(${question.id} as varchar)`))
+        // .groupBy(sql`
+        //     CASE
+        //       WHEN ${question.difficulty} > 7 THEN 'difficult'
+        //       WHEN ${question.difficulty} > 4 THEN 'medium'
+        //       ELSE 'easy'
+        //     END
+        //   `);
+        const questionSetCorrect = await (connection).select({
+            'correctAnswers': count(questionLog.correct),            
+        // @ts-expect-error We should expect this to occur
+        }).from(questionLog).where(and(eq(questionLog.collectionID, setInformation[0].id), eq(questionLog.userID, session.credentials?.id), eq(questionLog.correct, true)))
         .leftJoin(question, eq(questionLog.questionID, sql`CAST(${question.id} as varchar)`))
         .groupBy(sql`
             CASE
@@ -40,8 +45,41 @@ export async function POST(request: NextRequest) {
               ELSE 'easy'
             END
           `);
+        // const questionCorrectDifficulty = await (connection).select({
+        //     'difficulty': sql`
+        //         CASE
+        //             WHEN ${question.difficulty} > 7 THEN 'difficult'
+        //             WHEN ${question.difficulty} > 4 THEN 'medium'
+        //             ELSE 'easy'
+        //         END
+        //     `,
+        //     'correct': count(question.difficulty)
+        // // @ts-expect-error We should expect this to occur
+        // }).from(questionLog).where(and(eq(questionLog.collectionID, setInformation[0].id), eq(questionLog.userID, session.credentials?.id), eq(questionLog.correct, true)))
+        // .leftJoin(question, eq(questionLog.questionID, sql`CAST(${question.id} as varchar)`))
+        // .groupBy(sql`
+        //     CASE
+        //       WHEN ${question.difficulty} > 7 THEN 'difficult'
+        //       WHEN ${question.difficulty} > 4 THEN 'medium'
+        //       ELSE 'easy'
+        //     END
+        //   `);
+        // Get previous question
+        const query = await connection.select({
+            'correct': questionLog.correct,
+            'timestamp': questionLog.timestamp,
+            'type': question.type,
+            'id': question.id,
+            'difficulty': question.difficulty
+          }).from(questionLog).where(and(
+            // @ts-expect-error We should expect this to occur
+            eq(questionLog.userID, session.credentials?.id),
+            eq(questionLog.collectionID, setInformation[0].id),
+          ))
+          .leftJoin(question, eq(sql`CAST(${question.id} AS VARCHAR)`, questionLog.questionID))
+          .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(1)
         // If logs are 0, be generous
-        if (questionSetLogs.length == 0 || questionSetLogs.length != 0) {
+        if (questionSetCount[0].totalAnswers == 0) {
             // Generate questions and grab a random one
             const questions = await (connection).select({
                 'id': question.id,
@@ -53,6 +91,56 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({
                 'question': questions[Math.trunc(Math.random() * questions.length)]
             })
+        // Begin the algorithm based on total stats
+        } else {
+            /*
+            Logic happens here
+            */
+            //    Ability estimate
+            const weight = 0.6
+            const accuracy = ((1.0*questionSetCorrect[0].correctAnswers)/questionSetCount[0].totalAnswers)
+            const abilityEstimate = weight * accuracy + (1-weight) * (query[0].correct ? 1 : 0)
+            const nextDifficulty = (query[0].difficulty + 3 * (abilityEstimate - 0.6)) * 10     
+            if (Math.max(0, Math.min(10, nextDifficulty)) > 7) {
+                // Generate questions and grab a random one
+                const questions = await (connection).select({
+                   'id': question.id,
+                   'type': question.type,
+                   'questionName': question.questionName,
+                   'answerChoices': question.answerChoices,            
+               }).from(question).where(and(eq(question.collectionID, setInformation[0].id), gt(question.difficulty, 7)))
+               // Grabbing an effectively random question from the DB
+               return NextResponse.json({
+                   'question': questions[Math.trunc(Math.random() * questions.length)]
+               })
+               // Medium
+            } else if (Math.max(0, Math.min(10, nextDifficulty)) >4) {
+                // Generate questions and grab a random one
+                const questions = await (connection).select({
+                   'id': question.id,
+                   'type': question.type,
+                   'questionName': question.questionName,
+                   'answerChoices': question.answerChoices,            
+               }).from(question).where(and(eq(question.collectionID, setInformation[0].id), gt(question.difficulty, 4), lt(question.difficulty, 7)))
+               // Grabbing an effectively random question from the DB
+               return NextResponse.json({
+                   'question': questions[Math.trunc(Math.random() * questions.length)]
+               })
+   
+               // Easy otherwise
+            } else {
+                // Generate questions and grab a random one
+                const questions = await (connection).select({
+                   'id': question.id,
+                   'type': question.type,
+                   'questionName': question.questionName,
+                   'answerChoices': question.answerChoices,            
+               }).from(question).where(and(eq(question.collectionID, setInformation[0].id), lt(question.difficulty, 4)))
+               // Grabbing an effectively random question from the DB
+               return NextResponse.json({
+                   'question': questions[Math.trunc(Math.random() * questions.length)]
+               })
+            }
         }
     }
     return NextResponse.json({
