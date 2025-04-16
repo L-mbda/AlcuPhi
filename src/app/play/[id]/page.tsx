@@ -4,12 +4,11 @@ import { question, questionCollection, questionLog } from "@/db/schema"
 import { QuestionSection, RecentQuestions } from "@/lib/question"
 import { getSessionData } from "@/lib/session"
 import { and, count, eq, sql } from "drizzle-orm"
-import { Lightbulb, Target, Sparkles, ArrowRight, CheckCircle2 } from "lucide-react"
+import { Target, CheckCircle2 } from "lucide-react"
 import { redirect } from "next/navigation"
-export const dynamic = "force-dynamic";
+export const dynamic = "force-dynamic"
 
 export default async function PlaySet({ params }: { params: Promise<{ id: string }> }) {
-  dynamic
   const connection = await db()
   const id = (await params).id
   const setID = await connection
@@ -23,7 +22,8 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
   }
 
   const questionsCorrect =
-      (await connection
+    (
+      await connection
         .select({
           correctCount: sql<number>`COUNT(*)`.mapWith(Number),
         })
@@ -35,7 +35,8 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
             eq(question.collectionID, setID[0].id),
             eq(question.type, "multipleChoice"),
           ),
-        ))[0].correctCount || 0;
+        )
+    )[0].correctCount || 0
 
   const totalQuestions =
     (
@@ -45,12 +46,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
         })
         .from(questionLog)
         .innerJoin(question, sql`${questionLog.questionID}::bigint = ${question.id}`)
-        .where(
-          and(
-            eq(question.collectionID, setID[0].id),
-            eq(question.type, "multipleChoice"),
-          ),
-        )
+        .where(and(eq(question.collectionID, setID[0].id), eq(question.type, "multipleChoice")))
     )[0].totalQuestions || 1
 
   const questionsAttempted = await connection
@@ -58,7 +54,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
       attempts: count(questionLog.id),
     })
     .from(questionLog)
-      // @ts-expect-error We should expect this to occur
+    // @ts-expect-error We should expect this to occur
     .where(and(eq(questionLog.collectionID, setID[0].id), eq(questionLog.userID, session.id)))
   const accuracy = totalQuestions > 0 ? Math.round((questionsCorrect / totalQuestions) * 100) : 0
 
@@ -79,14 +75,14 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
         </div>
 
         {/* Bento Grid Layout */}
-        <div className="grid grid-cols-12 gap-4">
-          {/* Main question area */}
-          <div className="col-span-12 lg:col-span-8 row-span-1">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          {/* Main question area - takes full width on mobile, 8/12 on desktop */}
+          <div className="lg:col-span-8">
             <QuestionSection communityID={id} />
           </div>
 
-          {/* Progress Stats Card */}
-          <div className="col-span-12 lg:col-span-4 row-span-1">
+          {/* Progress Stats Card - takes full width on mobile, 4/12 on desktop */}
+          <div className="lg:col-span-4">
             <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20 h-full">
               <CardHeader className="pb-2 border-b border-zinc-800">
                 <CardTitle className="flex items-center text-lg text-white">
@@ -104,7 +100,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
                     <span className="text-sm text-zinc-300">Accuracy*</span>
                   </div>
                   <div className="flex flex-col items-center justify-center p-4 bg-zinc-800/50 rounded-xl border border-zinc-700/50 backdrop-blur-sm">
-                    <div className="flex items-center justify-center w-12 h-12  mb-2">
+                    <div className="flex items-center justify-center w-12 h-12 mb-2">
                       <span className="text-2xl font-bold text-white">{questionsAttempted[0].attempts}</span>
                     </div>
                     <span className="text-sm text-zinc-300">Questions</span>
@@ -117,54 +113,16 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
             </Card>
           </div>
 
-          {/* Recent Questions */}
-          <div className="col-span-12 lg:col-span-8 row-span-1">
+          {/* Recent Questions - takes full width on mobile, 8/12 on desktop */}
+          <div className="lg:col-span-full">
             <RecentQuestions collectionID={id} />
           </div>
 
-          {/* Recommended Practice */}
-          <div className="col-span-12 lg:col-span-4 row-span-1">
-            <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20 h-full">
-              <CardHeader className="pb-2 border-b border-zinc-800">
-                <CardTitle className="flex items-center text-lg text-white">
-                  <Lightbulb className="mr-2 h-5 w-5 text-amber-400" />
-                  Recommended Practice
-                </CardTitle>
-                <CardDescription className="text-zinc-400">Based on your performance</CardDescription>
-              </CardHeader>
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
-                    <div className="font-medium flex items-center justify-between text-white">
-                      <div className="flex items-center">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 mr-3">
-                          <Sparkles className="h-4 w-4 text-white" />
-                        </div>
-                        Kinematics Problems
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="text-sm text-zinc-400 mt-2 ml-11">
-                      Improve your understanding of motion equations
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
-                    <div className="font-medium flex items-center justify-between text-white">
-                      <div className="flex items-center">
-                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 mr-3">
-                          <Sparkles className="h-4 w-4 text-white" />
-                        </div>
-                        Thermodynamics Quiz
-                      </div>
-                      <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
-                    </div>
-                    <div className="text-sm text-zinc-400 mt-2 ml-11">Practice heat transfer and entropy concepts</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          {/* Recommended Practice - takes full width on mobile, 4/12 on desktop */}
+          {/* Uncomment when ready to use */}
+          {/* <div className="lg:col-span-4">
+            <RecommendedPracticeSection />
+          </div> */}
         </div>
       </div>
     </div>

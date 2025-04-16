@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useEffect, useState } from "react"
-import { CheckCircle, XCircle, Loader2, History, Clock, FileQuestion, Circle, X } from 'lucide-react'
+import { CheckCircle, XCircle, Loader2, History, Clock, FileQuestion, Circle, X, Lightbulb, Sparkles, ArrowRight } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
 import { get } from "http"
@@ -672,5 +672,61 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+export function RecommendedPracticeSection() {
+  // const [recommendedPractice, setRecommendedPractice] = useState<[]>();
+  // useEffect(() => {
+  //   async function run() {
+  //     const data = await (await fetch('/api/recommended', {
+  //       'method': 'POST',
+  //       'body': JSON.stri
+  //     })).json();
+  //   }
+  //   run()
+  // },[recommendedPractice])
+  return (
+      <Card className="border-zinc-800 bg-zinc-900 rounded-2xl overflow-hidden shadow-lg shadow-black/20 h-full">
+      <CardHeader className="pb-2 border-b border-zinc-800">
+        <CardTitle className="flex items-center text-lg text-white">
+          <Lightbulb className="mr-2 h-5 w-5 text-amber-400" />
+          Recommended Practice
+        </CardTitle>
+        <CardDescription className="text-zinc-400">Based on your performance</CardDescription>
+      </CardHeader>
+      <CardContent className="p-4">
+        <div className="space-y-3">
+          <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
+            <div className="font-medium flex items-center justify-between text-white">
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 mr-3">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                Kinematics Problems
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
+            </div>
+            <div className="text-sm text-zinc-400 mt-2 ml-11">
+              Improve your understanding of motion equations
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
+            <div className="font-medium flex items-center justify-between text-white">
+              <div className="flex items-center">
+                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 mr-3">
+                  <Sparkles className="h-4 w-4 text-white" />
+                </div>
+                Thermodynamics Quiz
+              </div>
+              <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
+            </div>
+            <div className="text-sm text-zinc-400 mt-2 ml-11">Practice heat transfer and entropy concepts</div>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+
   )
 }

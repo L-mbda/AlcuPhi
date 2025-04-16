@@ -27,7 +27,7 @@ export default async function RootLayout({
       <div className="w-full flex justify-between p-3 items-center">
         <div className="flex items-center gap-6">
           <div className="font-['STRIX'] text-3xl select-none">
-            <h1 className="font-['STIX'] font-extrabold">alcuφ</h1>
+            <Link href={'/dashboard'} className="font-['STIX'] font-extrabold">alcuφ</Link>
           </div>
           <SplashScreen />
         </div>
@@ -35,7 +35,7 @@ export default async function RootLayout({
         {/* Settings and Logout buttons */}
         <div className="flex items-center gap-2">
           <Button variant="ghost" size="icon" title="Settings" asChild>
-            <Link href="/dashboard/settings">
+            <Link href="/settings">
               <Settings className="h-5 w-5" />
             </Link>
           </Button>

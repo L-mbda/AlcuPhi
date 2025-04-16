@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
                 'type': question.type,
                 'questionName': question.questionName,
                 'answerChoices': question.answerChoices,            
-            }).from(question).where(and(eq(question.collectionID, setInformation[0].id), lt(question.difficulty, 7)))
+            }).from(question).where(and(eq(question.collectionID, setInformation[0].id)))
             // Grabbing an effectively random question from the DB
             return NextResponse.json({
                 'question': questions[Math.trunc(Math.random() * questions.length)]
@@ -100,15 +100,25 @@ export async function POST(request: NextRequest) {
             const weight = 0.6
             const accuracy = ((1.0*questionSetCorrect[0].correctAnswers)/questionSetCount[0].totalAnswers)
             const abilityEstimate = weight * accuracy + (1-weight) * (query[0].correct ? 1 : 0)
+            // @ts-expect-error We know that this would occur anyways
             const nextDifficulty = (query[0].difficulty + 3 * (abilityEstimate - 0.6)) * 10     
             if (Math.max(0, Math.min(10, nextDifficulty)) > 7) {
                 // Generate questions and grab a random one
-                const questions = await (connection).select({
+                let questions = await (connection).select({
                    'id': question.id,
                    'type': question.type,
                    'questionName': question.questionName,
                    'answerChoices': question.answerChoices,            
                }).from(question).where(and(eq(question.collectionID, setInformation[0].id), gt(question.difficulty, 7)))
+                //    If questions are 0, grab random one
+                if (questions.length == 0) {
+                    questions = await (connection).select({
+                        'id': question.id,
+                        'type': question.type,
+                        'questionName': question.questionName,
+                        'answerChoices': question.answerChoices,            
+                    }).from(question).where(and(eq(question.collectionID, setInformation[0].id)))        
+                }
                // Grabbing an effectively random question from the DB
                return NextResponse.json({
                    'question': questions[Math.trunc(Math.random() * questions.length)]
@@ -116,12 +126,21 @@ export async function POST(request: NextRequest) {
                // Medium
             } else if (Math.max(0, Math.min(10, nextDifficulty)) >4) {
                 // Generate questions and grab a random one
-                const questions = await (connection).select({
+                let questions = await (connection).select({
                    'id': question.id,
                    'type': question.type,
                    'questionName': question.questionName,
                    'answerChoices': question.answerChoices,            
                }).from(question).where(and(eq(question.collectionID, setInformation[0].id), gt(question.difficulty, 4), lt(question.difficulty, 7)))
+                //    If questions are 0, grab random one
+                if (questions.length == 0) {
+                    questions = await (connection).select({
+                        'id': question.id,
+                        'type': question.type,
+                        'questionName': question.questionName,
+                        'answerChoices': question.answerChoices,            
+                    }).from(question).where(and(eq(question.collectionID, setInformation[0].id)))        
+                }
                // Grabbing an effectively random question from the DB
                return NextResponse.json({
                    'question': questions[Math.trunc(Math.random() * questions.length)]
@@ -130,12 +149,21 @@ export async function POST(request: NextRequest) {
                // Easy otherwise
             } else {
                 // Generate questions and grab a random one
-                const questions = await (connection).select({
+                let questions = await (connection).select({
                    'id': question.id,
                    'type': question.type,
                    'questionName': question.questionName,
                    'answerChoices': question.answerChoices,            
                }).from(question).where(and(eq(question.collectionID, setInformation[0].id), lt(question.difficulty, 4)))
+                //    If questions are 0, grab random one
+                if (questions.length == 0) {
+                    questions = await (connection).select({
+                        'id': question.id,
+                        'type': question.type,
+                        'questionName': question.questionName,
+                        'answerChoices': question.answerChoices,            
+                    }).from(question).where(and(eq(question.collectionID, setInformation[0].id)))        
+                }
                // Grabbing an effectively random question from the DB
                return NextResponse.json({
                    'question': questions[Math.trunc(Math.random() * questions.length)]
@@ -159,6 +187,10 @@ export async function PATCH(request: NextRequest) {
         if (questions.length == 0) {
             return NextResponse.json({"message": "failed to submit to question log, question doesn't exist?"}, {'status': 404})
         }
+        const collectionData = await connection.select().from(questionCollection).where(eq(questionCollection.id, questions[0].collectionID))
+        await connection.update(questionCollection).set({
+            'plays': collectionData[0].plays + 1
+        }).where(eq(questionCollection.id, collectionData[0].id))
         // Continue
         if (questions[0].type != 'multipleChoice') {
             await connection.insert(questionLog).values({

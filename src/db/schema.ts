@@ -16,6 +16,7 @@ export const user = pgTable("users", {
   salt1: varchar({ length: 512 }),
   salt2: varchar({ length: 512 }),
   role: varchar({ enum: ["owner", "admin", "user"] }),
+  active: varchar({enum: ['active', 'suspended']})
 });
 
 // Session :)
