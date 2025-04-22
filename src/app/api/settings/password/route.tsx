@@ -39,6 +39,22 @@ export async function PUT(data: NextRequest) {
                 'status': 403
             })
         }
+        password = await crypto
+            .createHash("sha3-256")
+            .update(json.newPassword + "")
+            .digest("hex");
+        password = await crypto
+            .createHash("sha3-512")
+            .update(userInfo[0].salt1 + password + userInfo[0].salt2)
+            .digest("hex");
+
+        if (password == userInfo[0].password) {
+            return NextResponse.json({
+                'message': "New password cannot be the same as the old password."
+            }, {
+                'status': 406
+            })
+        }
         // Create the salting variables
         const salt1 = crypto.randomBytes(256).toString("hex");
         const salt2 = crypto.randomBytes(256).toString("hex");
@@ -50,13 +66,6 @@ export async function PUT(data: NextRequest) {
             .createHash("sha3-512")
             .update(salt1 + password + salt2)
             .digest("hex");
-        if (password == userInfo[0].password) {
-            return NextResponse.json({
-                'message': "New password cannot be the same as the old password."
-            }, {
-                'status': 406
-            })
-        }
         await connection.update(user).set({
             'salt1': salt1,
             'salt2': salt2,

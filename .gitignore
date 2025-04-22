@@ -19,7 +19,7 @@
 
 # Drizzle
 /migrations/
-
+/cache/*
 # production
 /build
 

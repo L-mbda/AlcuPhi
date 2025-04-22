@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import {
   Table,
@@ -33,6 +34,7 @@ import {
   TableBody,
   TableCell,
 } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
 
 export interface Session {
   id: number;
@@ -74,7 +76,7 @@ export default function Settings({ session }: SettingsProps) {
 
         {(role !== 'user') && (
           <TabsContent value="admin" className="bg-zinc-800 p-4 rounded-lg">
-            <UserManagement />
+            <UserManagement data={session} />
           </TabsContent>
         )}
       </Tabs>
@@ -87,6 +89,7 @@ function ChangePasswordForm() {
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [status, setStatus] = React.useState<string | null>(null);
+  const { toast } = useToast()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -100,7 +103,11 @@ function ChangePasswordForm() {
       body: JSON.stringify({ currentPassword, newPassword }),
     });
     if (res.ok) {
-      setStatus("Password changed successfully");
+      setStatus("");
+      toast({
+        title: 'Updated',
+        description: 'Password updated successfully.'
+      })
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -215,32 +222,81 @@ function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
   );
 }
 
-function UserManagement() {
-  const [users, setUsers] = React.useState<{ id: number; name: string; email: string; role: string; }[]>([]);
-  const [status, setStatus] = React.useState<string>("");
+export function UserManagement({ data }: { data: Session }) {
+  const roleHierarchy: Record<Role, number> = {
+    user: 0,
+    admin: 1,
+    owner: 2,
+  }
+  const currentRoleRank = roleHierarchy[data.role]
+  const isOwner = data.role === "owner"
+
+  const [users, setUsers] = React.useState<User[]>([])
+  const [status, setStatus] = React.useState<string>("")
+
+  type ActionType = "delete" | "suspend" | "promote"
+  const [modalOpen, setModalOpen] = React.useState(false)
+  const [pending, setPending] = React.useState<{
+    type: ActionType
+    user: User
+  } | null>(null)
 
   React.useEffect(() => {
     fetch("/api/admin/users")
       .then((res) => res.json())
-      .then(({ users }) => setUsers(users));
-  }, []);
+      .then(({ users }: { users: User[] }) => setUsers(users))
+      .catch(() => setStatus("Failed to load users"))
+  }, [])
 
-  const handleAction = async (id: number, action: "delete" | "suspend") => {
-    const res = await fetch(`/api/admin/users/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action }),
-    });
-    if (res.ok) {
-      setUsers((u) => u.filter((x) => x.id !== id));
-    } else {
-      setStatus("Error performing action");
+  const confirmAction = async () => {
+    if (!pending) return
+    const { type, user } = pending
+
+    // guard: only owners can promote, and you must outrank target
+    if (
+      (type === "promote" && !isOwner) ||
+      currentRoleRank <= roleHierarchy[user.role]
+    ) {
+      setStatus("You don’t have permission for that.")
+      setModalOpen(false)
+      return
     }
-  };
+
+    const res = await fetch(`/api/admin/users`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: type, id: user.id }),
+    })
+
+    if (res.ok) {
+      if (type === "promote") {
+        setUsers((u) =>
+          u.map((x) =>
+            x.id === user.id ? { ...x, role: "admin" } : x
+          )
+        )
+      } else {
+        setUsers((u) => u.filter((x) => x.id !== user.id))
+      }
+    } else {
+      setStatus(`Error performing ${type}`)
+    }
+
+    setModalOpen(false)
+    setPending(null)
+  }
+
+  const openModal = (type: ActionType, user: User) => {
+    setPending({ type, user })
+    setModalOpen(true)
+  }
 
   return (
     <div className="space-y-4">
-      {status && <p className="text-sm text-red-400">{status}</p>}
+      {status && (
+        <p className="text-sm text-red-400">{status}</p>
+      )}
+
       <div className="bg-zinc-800 rounded-lg overflow-auto">
         <Table>
           <TableHeader>
@@ -252,34 +308,105 @@ function UserManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((u) => (
-              <TableRow key={u.id}>
-                <TableCell>{u.name}</TableCell>
-                <TableCell>{u.email}</TableCell>
-                <TableCell>{u.role}</TableCell>
-                <TableCell className="space-x-2">
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    className="bg-red-700 hover:bg-red-600"
-                    onClick={() => handleAction(u.id, "delete")}
-                  >
-                    Delete
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    className="bg-zinc-600 hover:bg-zinc-500"
-                    onClick={() => handleAction(u.id, "suspend")}
-                  >
-                    Suspend
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))}
+            {users.map((u) => {
+              const targetRank = roleHierarchy[u.role]
+              const canModify = currentRoleRank > targetRank
+
+              return (
+                <TableRow key={u.id}>
+                  <TableCell>{u.name}</TableCell>
+                  <TableCell>{u.email}</TableCell>
+                  <TableCell>{u.role}</TableCell>
+                  <TableCell className="space-x-2">
+                    {canModify ? (
+                      <>
+                        <Button
+                          size="sm"
+                          className="bg-zinc-700 hover:bg-zinc-600"
+                          onClick={() =>
+                            openModal("delete", u)
+                          }
+                        >
+                          Delete
+                        </Button>
+                        <Button
+                          size="sm"
+                          className="bg-zinc-700 hover:bg-zinc-600"
+                          onClick={() =>
+                            openModal("suspend", u)
+                          }
+                        >
+                          Suspend
+                        </Button>
+
+                        {/* only show Promote to real owners */}
+                        {isOwner && u.role === "user" && (
+                          <Button
+                            size="sm"
+                            className="bg-zinc-700 hover:bg-zinc-600"
+                            onClick={() =>
+                              openModal("promote", u)
+                            }
+                          >
+                            Promote →
+                          </Button>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-zinc-500 italic">
+                        No actions
+                      </span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              )
+            })}
           </TableBody>
         </Table>
       </div>
+
+      <Dialog open={modalOpen} onOpenChange={setModalOpen}>
+        <DialogContent className="bg-zinc-800 text-white">
+          <DialogHeader>
+            <DialogTitle>
+              {pending?.type === "delete" && "Confirm Deletion"}
+              {pending?.type === "suspend" && "Confirm Suspension"}
+              {pending?.type === "promote" && "Confirm Promotion"}
+            </DialogTitle>
+            <DialogDescription>
+              {pending?.type === "delete" &&
+                `Permanently delete “${pending.user.name}”?`}
+              {pending?.type === "suspend" &&
+                `Suspend “${pending.user.name}”?`}
+              {pending?.type === "promote" &&
+                `Promote “${pending.user.name}” to admin?`}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="space-x-2">
+            <Button
+              className="bg-zinc-700 hover:bg-zinc-600"
+              onClick={() => setModalOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              className="bg-zinc-700 hover:bg-zinc-600"
+              onClick={confirmAction}
+            >
+              {pending?.type === "delete"
+                ? "Delete"
+                : pending?.type === "suspend"
+                ? "Suspend"
+                : "Promote"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
-  );
+  )
 }
+
+
+
+
+
