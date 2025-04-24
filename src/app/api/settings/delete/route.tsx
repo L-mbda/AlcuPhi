@@ -2,7 +2,7 @@ import { db } from "@/db/db";
 import { getSessionData } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 import * as crypto from 'crypto'
-import { question, questionCollection, user } from "@/db/schema";
+import { question, questionCollection, questionLog, session, user } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function DELETE(request: NextRequest) {
@@ -43,7 +43,26 @@ export async function DELETE(request: NextRequest) {
             // @ts-expect-error I know this would occur
             }).where(eq(questionCollection.creatorID, token.credentials?.id))
             // @ts-expect-error Expecting again
+            await connection.delete(session).where(eq(session.userID, token.credentials?.id));
+            // @ts-expect-error Expecting again
             await connection.delete(user).where(eq(user.id, token.credentials?.id));
+
+            // Check and transfer to system as needed
+            await connection.update(questionCollection).set({
+                'creatorID': systemquery[0].id
+            // @ts-expect-error Expecting again
+            }).where(eq(questionCollection.creatorID, token.credentials?.id))
+            // Check and transfer to system as needed
+            await connection.delete(questionLog)
+            // @ts-expect-error Expecting again
+            .where(eq(questionLog.userID, token.credentials?.id))
+            // Delete session
+            // @ts-expect-error Expecting again
+            await connection.delete(session).where(eq(session.userID, token.credentials?.id));
+            // Delete account
+            // @ts-expect-error Expecting again
+            await connection.delete(user).where(eq(user.id, token.credentials?.id));
+
             // Return response
             return NextResponse.json({
                 'message': 'Sorry to see you go! Your account has been deleted.'

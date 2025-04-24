@@ -20,7 +20,10 @@ export default async function RootLayout({
 
   if (session.action === "logout") {
     return redirect("/logout");
+  } else if (session.action === 'halt') {
+    return redirect('/suspended')
   }
+
   return (
     <main className="bg-zinc-950 h-full w-full absolute">
       {/* For the top menu */}

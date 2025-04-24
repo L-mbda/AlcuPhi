@@ -223,6 +223,7 @@ function DeleteAccountModal({ userId }: DeleteAccountModalProps) {
 }
 
 export function UserManagement({ data }: { data: Session }) {
+  // --- Role hierarchy & permissions ---
   const roleHierarchy: Record<Role, number> = {
     user: 0,
     admin: 1,
@@ -231,59 +232,96 @@ export function UserManagement({ data }: { data: Session }) {
   const currentRoleRank = roleHierarchy[data.role]
   const isOwner = data.role === "owner"
 
+  // --- State ---
   const [users, setUsers] = React.useState<User[]>([])
-  const [status, setStatus] = React.useState<string>("")
+  const [statusMsg, setStatusMsg] = React.useState<string>("")
 
-  type ActionType = "delete" | "suspend" | "promote"
+  type ActionType =
+    | "delete"
+    | "suspend"
+    | "reactivate"
+    | "promote"
+    | "demote"
+
   const [modalOpen, setModalOpen] = React.useState(false)
   const [pending, setPending] = React.useState<{
     type: ActionType
     user: User
   } | null>(null)
 
+  // --- Filters ---
+  const [filterStatus, setFilterStatus] = React.useState<Status | "all">(
+    "all"
+  )
+  const [filterName, setFilterName] = React.useState<string>("")
+  const [filterRole, setFilterRole] = React.useState<Role | "all">("all")
+
+  const getStatus = (u: User): Status =>
+    u.active === "suspended" ? "suspended" : "active"
+  
+  // --- Load users from `/api/users` ---
   React.useEffect(() => {
     fetch("/api/admin/users")
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error()
+        return res.json()
+      })
       .then(({ users }: { users: User[] }) => setUsers(users))
-      .catch(() => setStatus("Failed to load users"))
+      .catch(() => setStatusMsg("Failed to load users"))
   }, [])
 
+  // --- Confirm an action ---
   const confirmAction = async () => {
     if (!pending) return
     const { type, user } = pending
 
-    // guard: only owners can promote, and you must outrank target
+    // Only owner can change roles, and must outrank the target
     if (
-      (type === "promote" && !isOwner) ||
+      (["promote", "demote"].includes(type) && !isOwner) ||
       currentRoleRank <= roleHierarchy[user.role]
     ) {
-      setStatus("You don’t have permission for that.")
+      setStatusMsg("You don’t have permission for that.")
       setModalOpen(false)
       return
     }
 
-    const res = await fetch(`/api/admin/users`, {
+    const res = await fetch("/api/admin/users", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ action: type, id: user.id }),
     })
 
-    if (res.ok) {
-      if (type === "promote") {
-        setUsers((u) =>
-          u.map((x) =>
-            x.id === user.id ? { ...x, role: "admin" } : x
-          )
-        )
-      } else {
-        setUsers((u) => u.filter((x) => x.id !== user.id))
-      }
-    } else {
-      setStatus(`Error performing ${type}`)
+    if (!res.ok) {
+      setStatusMsg(`Error performing ${type}`)
+      setModalOpen(false)
+      return
     }
+
+    // Update UI
+    setUsers((uList) =>
+      uList
+        .map((x) => {
+          if (x.id !== user.id) return x
+
+          switch (type) {
+            case "promote":
+              return { ...x, role: "admin" }
+            case "demote":
+              return { ...x, role: "user" }
+            case "suspend":
+              return { ...x, active: "suspended" }
+            case "reactivate":
+              return { ...x, active: null }
+            case "delete":
+              return null
+          }
+        })
+        .filter(Boolean) as User[]
+    )
 
     setModalOpen(false)
     setPending(null)
+    setStatusMsg("")
   }
 
   const openModal = (type: ActionType, user: User) => {
@@ -291,12 +329,60 @@ export function UserManagement({ data }: { data: Session }) {
     setModalOpen(true)
   }
 
+  // --- Filtered list based on status/name/role ---
+  const filteredUsers = users.filter((u) => {
+    const status = getStatus(u)
+    if (filterStatus !== "all" && status !== filterStatus) return false
+    if (
+      filterName &&
+      !u.name.toLowerCase().includes(filterName.toLowerCase())
+    )
+      return false
+    if (filterRole !== "all" && u.role !== filterRole) return false
+    return true
+  })
+
   return (
     <div className="space-y-4">
-      {status && (
-        <p className="text-sm text-red-400">{status}</p>
-      )}
+      {statusMsg && <p className="text-sm text-red-400">{statusMsg}</p>}
 
+      {/* Filters */}
+      <div className="flex space-x-2">
+        <select
+          value={filterStatus}
+          onChange={(e) =>
+            setFilterStatus(e.target.value as Status | "all")
+          }
+          className="p-2 bg-zinc-800 rounded"
+        >
+          <option value="all">All Statuses</option>
+          <option value="active">Active</option>
+          <option value="suspended">Suspended</option>
+        </select>
+
+        <input
+          type="text"
+          placeholder="Search name…"
+          value={filterName}
+          onChange={(e) => setFilterName(e.target.value)}
+          className="p-2 bg-zinc-800 rounded flex-1"
+        />
+
+        <select
+          value={filterRole}
+          onChange={(e) =>
+            setFilterRole(e.target.value as Role | "all")
+          }
+          className="p-2 bg-zinc-800 rounded"
+        >
+          <option value="all">All Roles</option>
+          <option value="user">User</option>
+          <option value="admin">Admin</option>
+          <option value="owner">Owner</option>
+        </select>
+      </div>
+
+      {/* User Table */}
       <div className="bg-zinc-800 rounded-lg overflow-auto">
         <Table>
           <TableHeader>
@@ -304,11 +390,13 @@ export function UserManagement({ data }: { data: Session }) {
               <TableHead>Name</TableHead>
               <TableHead>Email</TableHead>
               <TableHead>Role</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((u) => {
+            {filteredUsers.map((u) => {
+              const status = getStatus(u)
               const targetRank = roleHierarchy[u.role]
               const canModify = currentRoleRank > targetRank
 
@@ -317,45 +405,53 @@ export function UserManagement({ data }: { data: Session }) {
                   <TableCell>{u.name}</TableCell>
                   <TableCell>{u.email}</TableCell>
                   <TableCell>{u.role}</TableCell>
+                  <TableCell className="capitalize">{status}</TableCell>
                   <TableCell className="space-x-2">
                     {canModify ? (
                       <>
                         <Button
                           size="sm"
-                          className="bg-zinc-700 hover:bg-zinc-600"
-                          onClick={() =>
-                            openModal("delete", u)
-                          }
+                          onClick={() => openModal("delete", u)}
                         >
                           Delete
                         </Button>
-                        <Button
-                          size="sm"
-                          className="bg-zinc-700 hover:bg-zinc-600"
-                          onClick={() =>
-                            openModal("suspend", u)
-                          }
-                        >
-                          Suspend
-                        </Button>
 
-                        {/* only show Promote to real owners */}
-                        {isOwner && u.role === "user" && (
+                        {status === "active" ? (
                           <Button
                             size="sm"
-                            className="bg-zinc-700 hover:bg-zinc-600"
-                            onClick={() =>
-                              openModal("promote", u)
-                            }
+                            onClick={() => openModal("suspend", u)}
+                          >
+                            Suspend
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={() => openModal("reactivate", u)}
+                          >
+                            Reactivate
+                          </Button>
+                        )}
+
+                        {isOwner && u.role === "user" && status === "active" && (
+                          <Button
+                            size="sm"
+                            onClick={() => openModal("promote", u)}
                           >
                             Promote →
                           </Button>
                         )}
+
+                        {isOwner && u.role === "admin" && status === "active" && (
+                          <Button
+                            size="sm"
+                            onClick={() => openModal("demote", u)}
+                          >
+                            ← Demote
+                          </Button>
+                        )}
                       </>
                     ) : (
-                      <span className="text-zinc-500 italic">
-                        No actions
-                      </span>
+                      <span className="text-zinc-500 italic">No actions</span>
                     )}
                   </TableCell>
                 </TableRow>
@@ -365,39 +461,39 @@ export function UserManagement({ data }: { data: Session }) {
         </Table>
       </div>
 
+      {/* Confirmation Dialog */}
       <Dialog open={modalOpen} onOpenChange={setModalOpen}>
         <DialogContent className="bg-zinc-800 text-white">
           <DialogHeader>
             <DialogTitle>
-              {pending?.type === "delete" && "Confirm Deletion"}
-              {pending?.type === "suspend" && "Confirm Suspension"}
-              {pending?.type === "promote" && "Confirm Promotion"}
+              {{
+                delete: "Confirm Deletion",
+                suspend: "Confirm Suspension",
+                reactivate: "Confirm Reactivation",
+                promote: "Confirm Promotion",
+                demote: "Confirm Demotion",
+              }[pending?.type ?? "delete"]}
             </DialogTitle>
             <DialogDescription>
-              {pending?.type === "delete" &&
-                `Permanently delete “${pending.user.name}”?`}
-              {pending?.type === "suspend" &&
-                `Suspend “${pending.user.name}”?`}
-              {pending?.type === "promote" &&
-                `Promote “${pending.user.name}” to admin?`}
+              {{
+                delete: `Permanently delete “${pending?.user.name}”?`,
+                suspend: `Suspend “${pending?.user.name}”?`,
+                reactivate: `Reactivate “${pending?.user.name}”?`,
+                promote: `Promote “${pending?.user.name}” to admin?`,
+                demote: `Demote “${pending?.user.name}” to user?`,
+              }[pending?.type ?? "delete"]}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="space-x-2">
-            <Button
-              className="bg-zinc-700 hover:bg-zinc-600"
-              onClick={() => setModalOpen(false)}
-            >
-              Cancel
-            </Button>
-            <Button
-              className="bg-zinc-700 hover:bg-zinc-600"
-              onClick={confirmAction}
-            >
-              {pending?.type === "delete"
-                ? "Delete"
-                : pending?.type === "suspend"
-                ? "Suspend"
-                : "Promote"}
+            <Button onClick={() => setModalOpen(false)}>Cancel</Button>
+            <Button onClick={confirmAction}>
+              {{
+                delete: "Delete",
+                suspend: "Suspend",
+                reactivate: "Reactivate",
+                promote: "Promote",
+                demote: "Demote",
+              }[pending?.type ?? "delete"]}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -405,8 +501,3 @@ export function UserManagement({ data }: { data: Session }) {
     </div>
   )
 }
-
-
-
-
-

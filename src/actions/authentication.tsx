@@ -174,12 +174,15 @@ export class Authentication {
             role: user.role,
             name: user.name,
             id: user.id,
+            active: user.active
           })
           .from(user)
           // @ts-expect-error since it is a file that needs it because of the eq() operator.
           .where(eq(user.id, sessionID[0].userID));
-        if (userAccount.length != 0) {
+        if (userAccount.length != 0 && (userAccount[0].active == 'active' || userAccount[0].active == null)) {
           return { action: "continue", credentials: userAccount[0] };
+        } else {
+          return {action: "halt", credentials: userAccount[0]}
         }
       } catch (e) {
         console.error(e);

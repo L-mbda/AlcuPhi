@@ -11,7 +11,7 @@ import { sql } from "drizzle-orm";
 export const user = pgTable("users", {
   id: bigint({ mode: "number" }).generatedAlwaysAsIdentity().primaryKey(),
   name: varchar({ length: 255 }).notNull(),
-  email: varchar({ length: 255 }).notNull(),
+  email: varchar({ length: 255 }).notNull().unique(),
   password: varchar({ length: 256 }),
   salt1: varchar({ length: 512 }),
   salt2: varchar({ length: 512 }),
