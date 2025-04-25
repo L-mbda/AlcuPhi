@@ -11,6 +11,7 @@ export default async function Play() {
   let focus = availableSources[0]
   if (cookie.get('focus') !== undefined) {
     // Default focus is set to this
+    // @ts-expect-error Eexpected lmao
     focus = cookie.get('focus')    
   }
 

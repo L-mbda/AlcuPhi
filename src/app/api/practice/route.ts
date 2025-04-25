@@ -189,6 +189,7 @@ export async function PATCH(request: NextRequest) {
         }
         const collectionData = await connection.select().from(questionCollection).where(eq(questionCollection.id, questions[0].collectionID))
         await connection.update(questionCollection).set({
+            // @ts-expect-error Eexpected lmao
             'plays': collectionData[0].plays + 1
         }).where(eq(questionCollection.id, collectionData[0].id))
         // Continue

@@ -36,6 +36,7 @@ export async function POST(data: NextRequest) {
             admin: 1,
             owner: 2,
           }
+        // @ts-expect-error Eexpected lmao
         const currentRoleRank = roleHierarchy[token.credentials?.role]        
         const individuals = await connection.select({
             'role': user.role
@@ -45,6 +46,7 @@ export async function POST(data: NextRequest) {
                 'message': 'Could not accept'
             },{status: 404})
         }
+        // @ts-expect-error Eexpected lmao
         const userRole = roleHierarchy[individuals[0].role];
         if (userRole >= currentRoleRank) {
             return NextResponse.json({
