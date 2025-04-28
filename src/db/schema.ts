@@ -55,6 +55,8 @@ export const questionLog = pgTable("questionLog", {
   // Needed for question collection bulk deletion
   // deleting all logs for a set
   collectionID: bigint({ mode: "number" }),
+  // Check based on the traditional collection
+  questionSet: varchar(),
 });
 
 // Questions for Community

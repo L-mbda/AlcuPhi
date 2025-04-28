@@ -31,7 +31,7 @@ export default async function Dashboard() {
                 various olympiads!
               </p>
               <Button className="mt-4" variant="default" asChild>
-                <Link href="/dashboard/practice" className="font-bold">
+                <Link href="/play" className="font-bold">
                   <LinkIcon /> Play
                 </Link>
               </Button>

@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       // Complex logic I don't know what I am doing
       const question = await fetchQuestion(data.questionID);
       // Check if the question exists and is correct, if it is, then return a success message
+
       if (question !== undefined) {
         if (question.answer == data.response) {
           // Update log
@@ -98,31 +99,55 @@ export async function POST(request: NextRequest) {
       );
     // Question log backend
     } else if (data.type == 'GET_DATA') {
-      // Get the set
-      const set = await (connection.select({
-        'id': questionCollection.id
-      }).from(questionCollection).where(eq(data.collectionID, questionCollection.publicID)));
-      if (set.length == 0) {
-        return NextResponse.json({
-          'message': 'Set collection not passed.'
-        },{status: 406})
+      let set,query = undefined;
+      // If Not Nan
+      if (!isNaN(data.collectionID)) {
+        // Get the set
+        set = await (connection.select({
+          'id': questionCollection.id
+        }).from(questionCollection).where(eq(data.collectionID, questionCollection.publicID)));
+        if (set.length == 0) {
+          return NextResponse.json({
+            'message': 'Set collection not passed.'
+          },{status: 406})
+        }
+        // Get data
+        query = await connection.select({
+          'correct': questionLog.correct,
+          'timestamp': questionLog.timestamp,
+          'type': question.type,
+          'name': question.questionName,
+          'answerChoices': question.answerChoices,
+          'correctAnswer': question.correctAnswer,
+          'response': questionLog.response
+        }).from(questionLog).where(and(
+          // @ts-expect-error We should expect this to occur
+          eq(questionLog.userID, token.credentials?.id),
+          eq(questionLog.collectionID, set[0].id),
+        ))
+        .leftJoin(question, eq(sql`CAST(${question.id} AS VARCHAR)`, questionLog.questionID))
+        .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
+      // If NaN
+      } else {
+        // Make array
+        const setQuestionArray = [];
+        // Make db query
+        const newInfo = await connection.select().from(questionLog).where(and(
+          eq(questionLog.questionSet, data.collectionID),
+          // @ts-expect-error Expecting lmao
+          eq(questionLog.userID, token.credentials?.id)
+        ))
+        .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
+        // For
+        for (let i = 0; i < newInfo.length;i++) {
+          setQuestionArray.push({
+            'question': fetchQuestion(newInfo[i].id),
+            'logInfo': 
+          });
+        }
+        const query = setQuestionArray;
+        // query = await connection.select().from()
       }
-      // Get data
-      const query = await connection.select({
-        'correct': questionLog.correct,
-        'timestamp': questionLog.timestamp,
-        'type': question.type,
-        'name': question.questionName,
-        'answerChoices': question.answerChoices,
-        'correctAnswer': question.correctAnswer,
-        'response': questionLog.response
-      }).from(questionLog).where(and(
-        // @ts-expect-error We should expect this to occur
-        eq(questionLog.userID, token.credentials?.id),
-        eq(questionLog.collectionID, set[0].id),
-      ))
-      .leftJoin(question, eq(sql`CAST(${question.id} AS VARCHAR)`, questionLog.questionID))
-      .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
       return NextResponse.json({
         'message': 'success',
         'response': query

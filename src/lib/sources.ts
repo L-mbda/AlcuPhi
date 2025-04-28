@@ -6,5 +6,6 @@
 // Constant with all sources available
 export const availableSources = [{
     'name': 'ipho',
-    'description': 'Practice with questions from the International Physics Olympiad!'
+    'description': 'Practice with questions from the International Physics Olympiad!',
+    'source': 'ipho.json'
 }]
