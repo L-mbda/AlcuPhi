@@ -78,7 +78,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Main question area - takes full width on mobile, 8/12 on desktop */}
           <div className="lg:col-span-8">
-            <QuestionSection communityID={id} />
+            <QuestionSection communityID={id} intent={0} />
           </div>
 
           {/* Progress Stats Card - takes full width on mobile, 4/12 on desktop */}

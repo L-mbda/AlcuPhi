@@ -144,16 +144,36 @@ export async function POST(request: NextRequest) {
         .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
         // For
         for (let i = 0; i < newInfo.length;i++) {
-          setQuestionArray.push({
-            'question': fetchQuestion(newInfo[i].id),
-            // 'logInfo': 
-          });
+          const query = fetchQuestion(newInfo[i].questionID)
+          if (query != null) {
+            if (query.answerMethod == 'multipleChoice') {
+              setQuestionArray.push({
+                'name': query.question,
+                'response': newInfo[i].response,
+                'correct': newInfo[i].correct,
+                'timestamp': newInfo[i].timestamp,
+                'type': query.answerMethod,
+                'correctAnswer': query.answer,
+                'answerChoices': query.options
+                // 'logInfo': 
+              });  
+            } else {
+              setQuestionArray.push({
+                'name': query.question,
+                'response': newInfo[i].response,
+                'correct': newInfo[i].correct,
+                'timestamp': newInfo[i].timestamp,
+                'type': query.answerMethod,
+                'correctAnswer': [query.answer],
+                'answerChoices': []
+                // 'logInfo': 
+              });  
+            }
+          }
         }
-        const query = setQuestionArray;
-        // query = await connection.select().from()
         return NextResponse.json({
           'message': 'success',
-          'response': query
+          'response': setQuestionArray,
         });  
       }
     }

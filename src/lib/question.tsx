@@ -21,7 +21,7 @@ interface Question {
   correctAnswer?: string // For free response questions
 }
 
-export function QuestionSection({ communityID }: { communityID: string | undefined }) {
+export function QuestionSection({ communityID, intent }: { communityID: string | undefined, intent: number }) {
   const [question, setQuestion] = useState<Question>()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -129,6 +129,7 @@ export function QuestionSection({ communityID }: { communityID: string | undefin
           body: JSON.stringify({
             method: "GET_QUESTION",
             setID: communityID,
+            intent: intent
           }),
         })
 

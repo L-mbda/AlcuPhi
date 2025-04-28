@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { db } from "@/db/db"
 import { question, questionLog } from "@/db/schema"
-import { RecentQuestions } from "@/lib/question"
+import { QuestionSection, RecentQuestions } from "@/lib/question"
 import { getSessionData } from "@/lib/session"
 import { availableSources } from "@/lib/sources"
 import { and, count, eq, sql } from "drizzle-orm"
@@ -81,7 +81,7 @@ export default async function Play() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           {/* Main question area - takes full width on mobile, 8/12 on desktop */}
           <div className="lg:col-span-8">
-            {/* <QuestionSection communityID={id} /> */}
+            <QuestionSection communityID={focus} intent={1} />
           </div>
 
           {/* Progress Stats Card - takes full width on mobile, 4/12 on desktop */}
