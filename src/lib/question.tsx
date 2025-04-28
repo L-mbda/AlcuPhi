@@ -377,7 +377,7 @@ const customScrollbarStyles = `
   }
 `
 
-export function RecentQuestions({ collectionID }: { collectionID: string }) {
+export function RecentQuestions({ collectionID, intent }: { collectionID: string, intent: number }) {
   const [questions, setQuestions] = useState<QuestionType[]>([])
   const [limit, setLimit] = useState(5)
   const [isLoading, setIsLoading] = useState(true)
@@ -395,6 +395,7 @@ export function RecentQuestions({ collectionID }: { collectionID: string }) {
               type: "GET_DATA",
               limit: limit,
               collectionID: collectionID,
+              intent: intent
             }),
           })
         ).json()

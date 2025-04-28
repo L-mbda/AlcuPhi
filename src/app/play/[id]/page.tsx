@@ -115,7 +115,7 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
 
           {/* Recent Questions - takes full width on mobile, 8/12 on desktop */}
           <div className="lg:col-span-full">
-            <RecentQuestions collectionID={id} />
+            <RecentQuestions collectionID={id} intent={0} />
           </div>
 
           {/* Recommended Practice - takes full width on mobile, 4/12 on desktop */}

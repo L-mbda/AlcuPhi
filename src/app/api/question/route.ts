@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
     } else if (data.type == 'GET_DATA') {
       let set,query = undefined;
       // If Not Nan
-      if (!isNaN(data.collectionID)) {
+      if (data.intent !== undefined && data.intent == 0) {
         // Get the set
         set = await (connection.select({
           'id': questionCollection.id
@@ -127,7 +127,11 @@ export async function POST(request: NextRequest) {
         ))
         .leftJoin(question, eq(sql`CAST(${question.id} AS VARCHAR)`, questionLog.questionID))
         .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
-      // If NaN
+        return NextResponse.json({
+          'message': 'success',
+          'response': query
+        });  
+        // If NaN
       } else {
         // Make array
         const setQuestionArray = [];
@@ -142,16 +146,16 @@ export async function POST(request: NextRequest) {
         for (let i = 0; i < newInfo.length;i++) {
           setQuestionArray.push({
             'question': fetchQuestion(newInfo[i].id),
-            'logInfo': 
+            // 'logInfo': 
           });
         }
         const query = setQuestionArray;
         // query = await connection.select().from()
+        return NextResponse.json({
+          'message': 'success',
+          'response': query
+        });  
       }
-      return NextResponse.json({
-        'message': 'success',
-        'response': query
-      });
     }
   }
   return NextResponse.json(
