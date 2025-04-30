@@ -109,9 +109,6 @@ export default async function Play() {
                     <span className="text-sm text-zinc-300">Questions</span>
                   </div>
                 </div>
-                <p className="text-zinc-500 text-xs italic mt-4 text-center">
-                  * multiple choice is only utilized for calculating accuracy
-                </p>
               </CardContent>
             </Card>
           </div>

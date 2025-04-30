@@ -1,5 +1,6 @@
 import { db } from "@/db/db";
 import { question, questionCollection, questionLog } from "@/db/schema";
+import { fetchQuestion, generateQuestion } from "@/lib/questions/q";
 import { getSessionData } from "@/lib/session";
 import { and, asc, count, desc, eq, gt, lt, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
@@ -11,7 +12,7 @@ export async function POST(request: NextRequest) {
     if (session.action != 'continue') {
         return NextResponse.json({'message': 'You are unauthorized to do this action.'},{status:403})
     }
-    if (data.setID != undefined && data.method == 'GET_QUESTION') {
+    if (data.setID != undefined && data.method == 'GET_QUESTION' && data.intent == 0) {
         const setInformation = await (connection).select().from(questionCollection).where(eq(data.setID, questionCollection.publicID))
         if (setInformation.length == 0) {
             return NextResponse.json({
@@ -166,15 +167,23 @@ export async function POST(request: NextRequest) {
                 }
                // Grabbing an effectively random question from the DB
                return NextResponse.json({
-                   'question': questions[Math.trunc(Math.random() * questions.length)]
+                   'question': questions[Math.trunc(Math.random() * questions.length)]                   
                })
             }
         }
+    } else if (data.setID != undefined && data.method == 'GET_QUESTION' && data.intent == 1) {
+        const query = await connection.select().from(questionLog).where(eq(questionLog.questionSet, data.setID));
+        if (query.length == 0) {
+            return NextResponse.json({
+                'question': generateQuestion('*', data.setID),
+            })
+        }
     }
+
     return NextResponse.json({
         'question': 'NONE'
     }); 
-}
+} 
 
 // Question log submission and more
 export async function PATCH(request: NextRequest) {
@@ -182,55 +191,87 @@ export async function PATCH(request: NextRequest) {
     const data = await request.json()
     const session = (await getSessionData());
     if (session.action == 'continue' && data.questionID != undefined && data.response != undefined) {
-        const questions = await connection.select().from(question).where(eq(data.questionID, question.id))
-        // If question length is 0, return fail
-        if (questions.length == 0) {
-            return NextResponse.json({"message": "failed to submit to question log, question doesn't exist?"}, {'status': 404})
-        }
-        const collectionData = await connection.select().from(questionCollection).where(eq(questionCollection.id, questions[0].collectionID))
-        await connection.update(questionCollection).set({
-            // @ts-expect-error Eexpected lmao
-            'plays': collectionData[0].plays + 1
-        }).where(eq(questionCollection.id, collectionData[0].id))
-        // Continue
-        if (questions[0].type != 'multipleChoice') {
-            await connection.insert(questionLog).values({
-                // @ts-expect-error We should expect this to occur
-                'userID': session.credentials?.id,
-                'correct': true,
-                'response': data.response,
-                'timestamp': (new Date()).getTime(),
-                'questionID': questions[0].id,
-                'collectionID': questions[0].collectionID,
-            })
-            return NextResponse.json({"message": "success", "correctAnswer": questions[0].correctAnswer})
+        if (data.intent == 0) {
+            const questions = await connection.select().from(question).where(eq(data.questionID, question.id))
+            // If question length is 0, return fail
+            if (questions.length == 0) {
+                return NextResponse.json({"message": "failed to submit to question log, question doesn't exist?"}, {'status': 404})
+            }
+            const collectionData = await connection.select().from(questionCollection).where(eq(questionCollection.id, questions[0].collectionID))
+            await connection.update(questionCollection).set({
+                // @ts-expect-error Eexpected lmao
+                'plays': collectionData[0].plays + 1
+            }).where(eq(questionCollection.id, collectionData[0].id))
+            // Continue
+            if (questions[0].type != 'multipleChoice') {
+                await connection.insert(questionLog).values({
+                    // @ts-expect-error We should expect this to occur
+                    'userID': session.credentials?.id,
+                    'correct': true,
+                    'response': data.response,
+                    'timestamp': (new Date()).getTime(),
+                    'questionID': questions[0].id,
+                    'collectionID': questions[0].collectionID,
+                })
+                return NextResponse.json({"message": "success", "correctAnswer": questions[0].correctAnswer})
+            } else {
+                await connection.insert(questionLog).values({
+                    // @ts-expect-error We should expect this to occur
+                    'userID': session.credentials?.id,
+                    'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),
+                    'response': data.response,
+                    'timestamp': (new Date()).getTime(),
+                    'questionID': questions[0].id,
+                    'collectionID': questions[0].collectionID,
+                })
+                // Check logs
+                const questionLogs = await connection.select({
+                    totalAttempts: count(questionLog.timestamp)
+                // @ts-expect-error Expected
+                }).from(questionLog).where(eq(questionLog.questionID,questions[0].id));
+                const correctLogs = await connection.select({
+                    correct: count(questionLog.correct)
+                // @ts-expect-error Expected
+                }).from(questionLog).where(and(eq(questionLog.questionID,questions[0].id), eq(questionLog.correct, true)));
+                // Update question difficulty regardless of any action
+                await connection.update(question).set({
+                    'difficulty': 10-(correctLogs[0].correct/questionLogs[0].totalAttempts)*10
+                }).where(eq(question.id, questions[0].id));
+                // Else
+                return NextResponse.json({"message": "success",
+                "correctAnswer": questions[0].correctAnswer, 'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1)))})
+            }    
         } else {
-            await connection.insert(questionLog).values({
-                // @ts-expect-error We should expect this to occur
-                'userID': session.credentials?.id,
-                'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),
-                'response': data.response,
-                'timestamp': (new Date()).getTime(),
-                'questionID': questions[0].id,
-                'collectionID': questions[0].collectionID,
-            })
-            // Check logs
-            const questionLogs = await connection.select({
-                totalAttempts: count(questionLog.timestamp)
-            // @ts-expect-error Expected
-            }).from(questionLog).where(eq(questionLog.questionID,questions[0].id));
-            const correctLogs = await connection.select({
-                correct: count(questionLog.correct)
-            // @ts-expect-error Expected
-            }).from(questionLog).where(and(eq(questionLog.questionID,questions[0].id), eq(questionLog.correct, true)));
-            // Update question difficulty regardless of any action
-            await connection.update(question).set({
-                'difficulty': 10-(correctLogs[0].correct/questionLogs[0].totalAttempts)*10
-            }).where(eq(question.id, questions[0].id));
-            // Else
-            return NextResponse.json({"message": "success",
-            "correctAnswer": questions[0].correctAnswer, 'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1)))})
+            // Else get from question sets and then if add if answer method isnt mcq
+            const question = fetchQuestion(data.questionID);
+            console.log(question)
+            if (question.answerMethod != 'multipleChoice') {
+                await connection.insert(questionLog).values({
+                    // @ts-expect-error Expecting lmao
+                    'questionSet': question.id.split('.')[1],
+                    'questionSetID': question.id,
+                    'correct': data.response === question.answer,
+                    'response': data.response,
+                    'userID': session.credentials?.id,
+                    'timestamp': (new Date()).getTime(),
+                })
+                return NextResponse.json({"message": "success", "correctAnswer": [question.answer]})
+            } else {
+                await connection.insert(questionLog).values({
+                    // @ts-expect-error Expecting lmao
+                    'questionSet': question.id.split('.')[1],
+                    'questionSetID': question.id,
+                    'correct': data.response === question.answer,
+                    'response': data.response,
+                    'userID': session.credentials?.id,
+                    'timestamp': (new Date()).getTime(),
+                    'correct': question.answer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),
+                })
+                // Else
+                return NextResponse.json({"message": "success",
+                "correctAnswer": question.answer, 'correct': question.answer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),})
+            }
         }
-    }
+   }
     return NextResponse.json({"message": "error"})
 }

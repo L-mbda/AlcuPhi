@@ -45,7 +45,7 @@ export const questionCollection = pgTable("questionCollection", {
 // Question Log for checking
 export const questionLog = pgTable("questionLog", {
   id: bigint({ mode: "number" }).generatedAlwaysAsIdentity().primaryKey(),
-  questionID: varchar().notNull(),
+  questionID: varchar(),
   userID: bigint({ mode: "number" })
     .notNull()
     .references(() => user.id),
@@ -57,6 +57,7 @@ export const questionLog = pgTable("questionLog", {
   collectionID: bigint({ mode: "number" }),
   // Check based on the traditional collection
   questionSet: varchar(),
+  questionSetID: varchar(),
 });
 
 // Questions for Community

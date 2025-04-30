@@ -42,6 +42,7 @@ export function QuestionSection({ communityID, intent }: { communityID: string |
           body: JSON.stringify({
             method: "GET_QUESTION",
             setID: communityID,
+            intent: intent,
           }),
         })
 
@@ -73,6 +74,7 @@ export function QuestionSection({ communityID, intent }: { communityID: string |
         body: JSON.stringify({
           questionID: question?.id,
           response: selectedAnswer,
+          intent: intent
         }),
       })
         .then((d) =>
@@ -101,6 +103,7 @@ export function QuestionSection({ communityID, intent }: { communityID: string |
       })
         .then((d) =>
           d.json().then((res) => {
+
             const referenceAnswer = res.correctAnswer[0] || "Sample answer" // Fallback for demo
             setCorrectFreeResponseAnswer(referenceAnswer)
             setSubmitting(false) // Set submitting to false when request completes
@@ -428,6 +431,7 @@ export function RecentQuestions({ collectionID, intent }: { collectionID: string
       ).json()
 
       if (data.message === "success") {
+        console.log(data)
         setAllQuestions(data.response || [])
       }
     } catch (error) {

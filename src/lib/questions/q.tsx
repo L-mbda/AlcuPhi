@@ -7,35 +7,38 @@ import * as fs from "fs";
 /*
   Generate the question with an algorithm based on type and user score, will work on that later
 */
-export function generateQuestion(type: string) {
+export function generateQuestion(type: string, setID: string) {
   // Get working directory
-  const cwd = process.cwd();
-  // Find all files in the working directory
-  for (const file of fs.readdirSync(cwd)) {
-    console.log(file);
-  }
-  console.log(cwd);
+  // const cwd = process.cwd();
+  // // Find all files in the working directory
+  // for (const file of fs.readdirSync(cwd)) {
+  //   console.log(file);
+  // }
+  // console.log(cwd);
   // Read each type of question
   // Check all question sets
   for (const file of fs.readdirSync("./questions")) {
+    const questions = []
     // Reading all question sets
     const questionSet = JSON.parse(
       fs.readFileSync(`./questions/${file}`, "utf-8"),
     );
     // Random matching
     for (const question of questionSet.questions) {
-      if (question.type == type || type == "*") {
-        return {
+      if ((question.id.split('.')[1] == setID) && (question.type == type || type == "*")) {
+
+        questions.push({
           displayMethod: question.displayMethod,
           id: question.id,
-          question: question.question,
+          questionName: question.question,
           difficulty: question.difficulty,
           tags: question.tags,
-          type: question.type,
-          answerMethod: question.answerMethod,
-        };
+          type: question.answerMethod,
+          answerChoices: question.answerChoices || [],
+        });
       }
     }
+    return questions[Math.trunc(Math.random() * questions.length)];
   }
 }
 
@@ -53,6 +56,7 @@ export function fetchQuestion(id: string) {
     // Random matching
     for (const question of questionSet.questions) {
       if (id == question.id) {
+        console.log(question)
         return question;
       }
     }

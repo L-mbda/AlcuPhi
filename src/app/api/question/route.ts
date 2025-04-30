@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
     // Mainly for getting the question
     // TODO: Create the question algorithm
     if (data.type == "REQUEST") {
-      const question = generateQuestion("*");
+      const question = generateQuestion("*", "ipho");
       console.log(question);
       // @ts-expect-error Expected because of question
       if (question.id.startsWith("qset.")) {
@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
         .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
         // For
         for (let i = 0; i < newInfo.length;i++) {
-          const query = fetchQuestion(newInfo[i].questionID)
+          const query = fetchQuestion(newInfo[i].questionSetID)
           if (query != null) {
             if (query.answerMethod == 'multipleChoice') {
               setQuestionArray.push({
@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
                 'timestamp': newInfo[i].timestamp,
                 'type': query.answerMethod,
                 'correctAnswer': query.answer,
-                'answerChoices': query.options
+                'answerChoices': query.answerChoices
                 // 'logInfo': 
               });  
             } else {
