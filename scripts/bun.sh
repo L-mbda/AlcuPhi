@@ -1,1 +1,2 @@
+ls
 bun run build
