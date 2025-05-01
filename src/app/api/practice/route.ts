@@ -173,10 +173,57 @@ export async function POST(request: NextRequest) {
         }
     } else if (data.setID != undefined && data.method == 'GET_QUESTION' && data.intent == 1) {
         const query = await connection.select().from(questionLog).where(eq(questionLog.questionSet, data.setID));
+        // If length is 0, give a random question to start off with
         if (query.length == 0) {
             return NextResponse.json({
                 'question': generateQuestion('*', data.setID),
             })
+        // Otherwise, begin adaptability
+        } else {
+            const questionSetCorrect = await connection.select({'correctAnswers': count(questionLog.correct)}).from(questionLog)
+            .where(and(
+                // @ts-expect-error Expecting
+                eq(session.credentials?.id, questionLog.userID),
+                eq(questionLog.correct, true),
+                eq(questionLog.questionSet, data.seID),
+            ))
+            const questionSetCount = await connection.select({'totalAnswers': count(questionLog.correct)}).from(questionLog)
+            .where(and(
+                // @ts-expect-error Expecting
+                eq(session.credentials?.id, questionLog.userID),
+                eq(questionLog.questionSet, data.seID),
+            ))
+            const recentQuestion = await connection.select().from(questionLog)
+            .where(and(
+                // @ts-expect-error Expecting
+                eq(session.credentials?.id, questionLog.userID),
+                eq(questionLog.questionSet, data.setID),
+            ))
+            .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(1)
+            const weight = 0.6
+            const accuracy = ((1.0*questionSetCorrect[0].correctAnswers)/questionSetCount[0].totalAnswers)
+            const abilityEstimate = weight * accuracy + (1-weight) * (recentQuestion[0].correct ? 1 : 0)
+            // @ts-expect-error We know that this would occur anyways
+            const nextDifficulty = (fetchQuestion(recentQuestion[0].questionSetID).difficulty + 3 * (abilityEstimate - 0.6)) * 10     
+            if (Math.max(0, Math.min(10, nextDifficulty)) > 7) {              
+               // Grabbing an effectively random question from the DB
+               return NextResponse.json({
+                    'question': generateQuestion('*',data.setID,'hard'),                
+                })
+               // Medium
+            } else if (Math.max(0, Math.min(10, nextDifficulty)) >4) {                
+               // Grabbing an effectively random question from the DB
+               return NextResponse.json({
+                   'question': generateQuestion('*',data.setID,'medium'),                
+               })
+   
+               // Easy otherwise
+            } else {                
+               // Grabbing an effectively random question from the DB
+               return NextResponse.json({
+                   'question': generateQuestion('*',data.setID,'easy'),                
+               })
+            }
         }
     }
 

@@ -12,6 +12,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { get } from "http"
 import { format } from "util"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { availableSources } from "./sources"
+import { toast } from "@/hooks/use-toast"
+
 // Interface
 interface Question {
   id: number
@@ -681,7 +684,7 @@ export function RecentQuestions({ collectionID, intent }: { collectionID: string
   )
 }
 
-export function RecommendedPracticeSection() {
+export function ChangeFocusSection() {
   // const [recommendedPractice, setRecommendedPractice] = useState<[]>();
   // useEffect(() => {
   //   async function run() {
@@ -697,39 +700,38 @@ export function RecommendedPracticeSection() {
       <CardHeader className="pb-2 border-b border-zinc-800">
         <CardTitle className="flex items-center text-lg text-white">
           <Lightbulb className="mr-2 h-5 w-5 text-amber-400" />
-          Recommended Practice
+          Change Focus
         </CardTitle>
-        <CardDescription className="text-zinc-400">Based on your performance</CardDescription>
+        <CardDescription className="text-zinc-400">Change your focus based on the competition you want to practice for
+          (based on available question sets)
+        </CardDescription>
       </CardHeader>
       <CardContent className="p-4">
         <div className="space-y-3">
-          <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
-            <div className="font-medium flex items-center justify-between text-white">
-              <div className="flex items-center">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 mr-3">
-                  <Sparkles className="h-4 w-4 text-white" />
-                </div>
-                Kinematics Problems
-              </div>
-              <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
-            </div>
-            <div className="text-sm text-zinc-400 mt-2 ml-11">
-              Improve your understanding of motion equations
-            </div>
-          </div>
+          {
+            availableSources.map((source, key) => {
+              return (
+                  <a onClick={() => {
+                    document.cookie = `focus=${source.name}; expires=${new Date(new Date().getTime() + 31556952000)}; path=/`;
+                    toast({'title': "Focus changed successfully", description: `Changed focus to ${source.displayName}!`})
+                  }} key={key} className="p-4 border-none transition-colors cursor-pointer group">
+                    <div className="font-medium flex items-center justify-between text-white">
+                      <div className="flex items-center">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-amber-500 to-orange-600 mr-3">
+                          <Sparkles className="h-4 w-4 text-white" />
+                        </div>
+                        {source.displayName}
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
+                    </div>
+                    <div className="text-sm text-zinc-400 mt-2 ml-11">
+                      {source.description}
+                    </div>
+                </a>
+              )
+            })
+          }
 
-          <div className="rounded-xl border border-zinc-700/50 p-4 hover:bg-zinc-800/50 transition-colors cursor-pointer group">
-            <div className="font-medium flex items-center justify-between text-white">
-              <div className="flex items-center">
-                <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-600 mr-3">
-                  <Sparkles className="h-4 w-4 text-white" />
-                </div>
-                Thermodynamics Quiz
-              </div>
-              <ArrowRight className="h-4 w-4 text-zinc-500 group-hover:text-white transition-colors" />
-            </div>
-            <div className="text-sm text-zinc-400 mt-2 ml-11">Practice heat transfer and entropy concepts</div>
-          </div>
         </div>
       </CardContent>
     </Card>

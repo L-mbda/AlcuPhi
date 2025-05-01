@@ -7,7 +7,8 @@ import * as fs from "fs";
 /*
   Generate the question with an algorithm based on type and user score, will work on that later
 */
-export function generateQuestion(type: string, setID: string) {
+export function generateQuestion(type: string, setID: string, difficulty = "random") {
+  console.log(difficulty)
   // Get working directory
   // const cwd = process.cwd();
   // // Find all files in the working directory
@@ -26,7 +27,7 @@ export function generateQuestion(type: string, setID: string) {
     // Random matching
     for (const question of questionSet.questions) {
       if ((question.id.split('.')[1] == setID) && (question.type == type || type == "*")) {
-
+        
         questions.push({
           displayMethod: question.displayMethod,
           id: question.id,

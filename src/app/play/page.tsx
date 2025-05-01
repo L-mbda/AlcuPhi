@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { db } from "@/db/db"
 import { question, questionLog } from "@/db/schema"
-import { QuestionSection, RecentQuestions } from "@/lib/question"
+import { ChangeFocusSection, QuestionSection, RecentQuestions } from "@/lib/question"
 import { getSessionData } from "@/lib/session"
 import { availableSources } from "@/lib/sources"
 import { and, count, eq, sql } from "drizzle-orm"
@@ -17,10 +17,8 @@ export default async function Play() {
   if (cookie.get('focus') !== undefined) {
     // Default focus is set to this
     // @ts-expect-error Eexpected lmao
-    focus = cookie.get('focus')    
+    focus = cookie.get('focus')?.value   
   }
-
-
 
   const session = (await getSessionData()).credentials
 
@@ -112,17 +110,16 @@ export default async function Play() {
               </CardContent>
             </Card>
           </div>
+          {/* Recommended Practice - takes full width on mobile, 4/12 on desktop */}
+          {/* Uncomment when ready to use */}
+          <div className="lg:col-span-4">
+            <ChangeFocusSection />
+          </div>
 
           {/* Recent Questions - takes full width on mobile, 8/12 on desktop */}
           <div className="lg:col-span-full">
             <RecentQuestions collectionID={focus} intent={1} />
           </div>
-
-          {/* Recommended Practice - takes full width on mobile, 4/12 on desktop */}
-          {/* Uncomment when ready to use */}
-          {/* <div className="lg:col-span-4">
-            <RecommendedPracticeSection />
-          </div> */}
         </div>
       </div>
     </div>
