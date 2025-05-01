@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
         .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
         // For
         for (let i = 0; i < newInfo.length;i++) {
+          // @ts-expect-error Expecting since its a bit diverse
           const query = fetchQuestion(newInfo[i].questionSetID)
           if (query != null) {
             if (query.answerMethod == 'multipleChoice') {

@@ -312,6 +312,7 @@ export async function PATCH(request: NextRequest) {
                     'response': data.response,
                     'userID': session.credentials?.id,
                     'timestamp': (new Date()).getTime(),
+                    // @ts-expect-error Expecting since its a bit diverse
                     'correct': question.answer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),
                 })
                 // Else
