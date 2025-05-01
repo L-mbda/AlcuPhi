@@ -1,6 +1,6 @@
 {
-  "name": "horizon-api",
-  "version": "0.1.0",
+  "name": "alcuphi",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "push": "drizzle-kit push",
+    "compile": "compile.ts",
     "migrate": "drizzle-kit generate && drizzle-kit push"
   },
   "dependencies": {
