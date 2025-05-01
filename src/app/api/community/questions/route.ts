@@ -130,11 +130,15 @@ export async function PUT(data: NextRequest) {
           correctAnswer: json.correctAnswer,
         });
       } else {
+        const fixedChoices = [];
+        for (let i = 0; i < json.answerChoices.length; i++) {
+          fixedChoices.push("text=" + json.answerChoices[i])
+        }
         await (await db()).update(question).set({
           questionName: json.questionName,
           type: json.type,
           questionCollectionTagName: collectionInfo[0].tags,
-          answerChoices: json.answerChoices,
+          answerChoices: fixedChoices,
           correctAnswer: json.correctAnswer,
         });
       }

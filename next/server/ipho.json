@@ -1,0 +1,18 @@
+{
+  "type": "questionSet",
+  "name": "IPhO",
+  "id": "qset.ipho",
+  "questions": [
+    {
+      "type": "question",
+      "displayMethod": "text",
+      "answerMethod": "multipleChoice",
+      "id": "qset.ipho.1",
+      "answerChoices": ["text=%24100%24","text=%24200%24"],
+      "question": "A small ball with mass $M=0.2$ rests on a vertical column of height $h = 5$. A bullet with mass $m = 0.01$, moving with velocity $v_0 = 500$, passes horizontally through the center of the ball. The ball reaches the ground at a horizontal distance $s = 20$.\nDetermine the horizontal distance at which the bullet reaches the ground.\nAssume that Air resistance is negligible. The sizes of the ball and the bullet are negligible. $g = 10$.\n*Do not include units in your answer.*",
+      "answer": ["option-1"],
+      "difficulty": 0,
+      "tags": ["mechanics", "kinematics"]
+    }
+  ]
+}

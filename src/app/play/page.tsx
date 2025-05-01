@@ -117,7 +117,7 @@ export default async function Play() {
           </div>
 
           {/* Recent Questions - takes full width on mobile, 8/12 on desktop */}
-          <div className="lg:col-span-full">
+          <div className="lg:col-span-8">
             <RecentQuestions collectionID={focus} intent={1} />
           </div>
         </div>
