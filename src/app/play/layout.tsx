@@ -8,7 +8,7 @@ import Link from "next/link";
 import { LogOut, Settings } from "lucide-react";
 export const metadata: Metadata = {
   title: "Alcuphi",
-  description: "Alcumus for us Physicists ⚛",
+  description: "Practice iPhO questions and more on AlcuPhi!",
 };
 
 export default async function RootLayout({
