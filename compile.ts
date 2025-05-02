@@ -16,7 +16,7 @@ if (isBun) {
 // Copy "./questions" → "./next/server"
 async function copyQuestionsDir() {
     const sourceDir = path.resolve('.', 'questions');
-    const destDir   = path.resolve('var', 'task','questions');
+    const destDir   = path.resolve('_next', 'static','questions');
 
     try {
         await cp(sourceDir, destDir, { recursive: true });
