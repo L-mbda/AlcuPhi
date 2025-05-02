@@ -26,17 +26,48 @@ export function generateQuestion(type: string, setID: string, difficulty = "rand
     );
     // Random matching
     for (const question of questionSet.questions) {
-      if ((question.id.split('.')[1] == setID) && (question.type == type || type == "*")) {
-        
-        questions.push({
-          displayMethod: question.displayMethod,
-          id: question.id,
-          questionName: question.question,
-          difficulty: question.difficulty,
-          tags: question.tags,
-          type: question.answerMethod,
-          answerChoices: question.answerChoices || [],
-        });
+      if (((question.id.split('.')[1] == setID) && ((question.type == type || type == "*")))) {
+        if (difficulty == 'easy' && question.difficulty <= 4) {
+          questions.push({
+            displayMethod: question.displayMethod,
+            id: question.id,
+            questionName: question.question,
+            difficulty: question.difficulty,
+            tags: question.tags,
+            type: question.answerMethod,
+            answerChoices: question.answerChoices || [],
+          });
+        } else if (difficulty == 'medium' && question.difficulty > 4 && question.difficulty <= 7) {
+          questions.push({
+            displayMethod: question.displayMethod,
+            id: question.id,
+            questionName: question.question,
+            difficulty: question.difficulty,
+            tags: question.tags,
+            type: question.answerMethod,
+            answerChoices: question.answerChoices || [],
+          });
+        } else if (difficulty == 'hard' && question.difficulty > 7) {
+          questions.push({
+            displayMethod: question.displayMethod,
+            id: question.id,
+            questionName: question.question,
+            difficulty: question.difficulty,
+            tags: question.tags,
+            type: question.answerMethod,
+            answerChoices: question.answerChoices || [],
+          });
+        } else {
+          questions.push({
+            displayMethod: question.displayMethod,
+            id: question.id,
+            questionName: question.question,
+            difficulty: question.difficulty,
+            tags: question.tags,
+            type: question.answerMethod,
+            answerChoices: question.answerChoices || [],
+          });  
+        }
       }
     }
     return questions[Math.trunc(Math.random() * questions.length)];
