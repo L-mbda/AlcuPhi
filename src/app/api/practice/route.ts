@@ -185,13 +185,13 @@ export async function POST(request: NextRequest) {
                 // @ts-expect-error Expecting
                 eq(session.credentials?.id, questionLog.userID),
                 eq(questionLog.correct, true),
-                eq(questionLog.questionSet, data.seID),
+                eq(questionLog.questionSet, data.setID),
             ))
             const questionSetCount = await connection.select({'totalAnswers': count(questionLog.correct)}).from(questionLog)
             .where(and(
                 // @ts-expect-error Expecting
                 eq(session.credentials?.id, questionLog.userID),
-                eq(questionLog.questionSet, data.seID),
+                eq(questionLog.questionSet, data.setID),
             ))
             const recentQuestion = await connection.select().from(questionLog)
             .where(and(
@@ -291,7 +291,6 @@ export async function PATCH(request: NextRequest) {
         } else {
             // Else get from question sets and then if add if answer method isnt mcq
             const question = fetchQuestion(data.questionID);
-            console.log(question)
             if (question.answerMethod != 'multipleChoice') {
                 await connection.insert(questionLog).values({
                     // @ts-expect-error Expecting lmao

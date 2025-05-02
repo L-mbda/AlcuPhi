@@ -9,9 +9,7 @@ import { useEffect, useState } from "react"
 import { CheckCircle, XCircle, Loader2, History, Clock, FileQuestion, Circle, X, Lightbulb, Sparkles, ArrowRight } from 'lucide-react'
 import { Badge } from "@/components/ui/badge"
 import { Textarea } from "@/components/ui/textarea"
-import { get } from "http"
-import { format } from "util"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { availableSources } from "./sources"
 import { toast } from "@/hooks/use-toast"
 
@@ -23,6 +21,65 @@ interface Question {
   answerChoices: string[]
   correctAnswer?: string // For free response questions
 }
+
+function ZoomableImage({
+  src,
+  alt,
+  className,
+  width,
+  height
+}: {
+  src: string
+  alt: string
+  className?: string
+  width?: number
+  height?: number
+}) {
+  const [isOpen, setIsOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  const handleZoom = () => {
+    setZoomLevel(prev => (prev === 1 ? 2 : 1));
+  };
+
+  return (
+    <Dialog open={isOpen} onOpenChange={setIsOpen}>
+      <DialogTrigger asChild>
+        <img
+          src={src}
+          alt={alt}
+          className={`cursor-zoom-in ${className}`}
+          width={width}
+          height={height}
+        />
+      </DialogTrigger>
+      <DialogContent 
+        className="w-screen h-screen max-w-none border-0 bg-black/90 p-0 cursor-zoom-out" 
+        onClick={() => setIsOpen(false)}
+        onInteractOutside={(e) => e.preventDefault()}
+      >
+        <div 
+          className="relative h-full w-full flex items-center justify-center"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <img 
+            src={src} 
+            alt={alt} 
+            className="object-contain transition-transform duration-300"
+            style={{
+              transform: `scale(${zoomLevel})`,
+              maxHeight: '90vh',
+              maxWidth: '90vw',
+              cursor: zoomLevel === 1 ? 'zoom-in' : 'zoom-out'
+            }}
+            onClick={handleZoom}
+          />
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 
 export function QuestionSection({ communityID, intent }: { communityID: string | undefined, intent: number }) {
   const [question, setQuestion] = useState<Question>()
@@ -210,8 +267,20 @@ export function QuestionSection({ communityID, intent }: { communityID: string |
       </CardHeader>
       <CardContent className="pt-6 pb-4">
         <div className="mb-8 text-white">
-          {/* @ts-expect-error Expected since we know that it would occur */}
-          <MathRender text={question?.questionName} />
+          {/* @ts-expect-error Expecting this lmao */}
+          {(question.displayMethod != undefined && question.displayMethod == "image") ? (
+            <ZoomableImage 
+              // @ts-expect-error Expecting
+              src={question?.questionName} 
+              alt="Question image"
+              className="rounded-lg border border-zinc-700"
+              width={300}
+              height={200}
+            />
+          ) : (
+            // @ts-expect-error Expecting
+            <MathRender text={question?.questionName} />
+          )}
         </div>
 
         {question?.type === "multipleChoice" && (
@@ -495,7 +564,18 @@ export function RecentQuestions({ collectionID, intent }: { collectionID: string
                   <div className="flex items-start justify-between">
                     <div>
                       <p className="text-zinc-300 font-medium">
-                        <MathRender text={question.name} />
+                        {
+                          question.name.startsWith('https://') ? (
+                            <ZoomableImage
+                              src={question.name}
+                              alt="Question preview"
+                              className="rounded border border-zinc-700"
+                              width={200}
+                            />
+                          ) : (
+                            <MathRender text={question.name} />
+                          )
+                        }
                       </p>
                       <p className="text-zinc-500 text-sm mt-1">{formatTimestamp(question.timestamp)}</p>
                       {question.type === "multipleChoice" && (
@@ -579,7 +659,18 @@ export function RecentQuestions({ collectionID, intent }: { collectionID: string
                     <div className="p-4 flex items-start justify-between">
                       <div>
                         <p className="text-white font-medium text-lg">
-                          <MathRender text={question.name} />
+                          {
+                            question.name.startsWith('https://') ? (
+                              <ZoomableImage
+                              src={question.name}
+                              alt="Question preview"
+                              className="rounded border border-zinc-700"
+                              width={200}
+                            />
+                            ) : (
+                              <MathRender text={question.name} />
+                            )
+                          }
                         </p>
                         <p className="text-zinc-500 text-xs mt-1">
                           <Clock className="h-3 w-3 mr-1 inline" /> {formatTimestamp(question.timestamp)}
@@ -738,3 +829,4 @@ export function ChangeFocusSection() {
 
   )
 }
+

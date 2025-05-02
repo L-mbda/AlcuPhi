@@ -13,6 +13,17 @@
       "answer": ["option-1"],
       "difficulty": 0,
       "tags": ["mechanics", "kinematics"]
+    },
+    {
+      "type": "question",
+      "displayMethod": "image",
+      "id": "qset.ipho.2",
+      "question": "https://imgv2-1-f.scribdassets.com/img/document/355435435/original/b2c5c6a271/1?v=1",
+      "answerChoices": ["text=%24100%24","text=%24200%24"],
+      "answer": ["option-1"],
+      "answerMethod": "multipleChoice",
+      "difficulty": 0,
+      "tags": ["mechanics", "kinematics"]
     }
   ]
 }
