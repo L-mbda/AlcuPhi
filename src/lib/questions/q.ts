@@ -14,7 +14,7 @@ export function generateQuestion(type: string, setID: string, difficulty = "rand
   console.log("Current Working Directory:", cwd);
 
   // Log the directory location where questions are stored
-  const questionDir = "./questions";
+  const questionDir = "questions";
   console.log("Questions Directory Location:", questionDir);
   fs.readdir(cwd, (err, files) => {
     if (err) {
@@ -31,11 +31,11 @@ export function generateQuestion(type: string, setID: string, difficulty = "rand
   });
   
   // Check all question sets
-  for (const file of fs.readdirSync(questionDir)) {
+  for (const file of fs.readdirSync(path.join(process.cwd(),"questions"))) {
     const questions = [];
     // Reading all question sets
     const questionSet = JSON.parse(
-      fs.readFileSync(`${questionDir}/${file}`, "utf-8"),
+      fs.readFileSync(path.join(process.cwd(),`${questionDir}`,`${file}`), "utf-8"),
     );
     // Random matching
     for (const question of questionSet.questions) {
@@ -96,14 +96,14 @@ export function fetchQuestion(id: string) {
   console.log("Current Working Directory:", cwd);
 
   // Log the directory location where questions are stored
-  const questionDir = "./questions";
+  const questionDir = "questions";
   console.log("Questions Directory Location:", questionDir);
 
   // Check all question sets
-  for (const file of fs.readdirSync(questionDir)) {
+  for (const file of fs.readdirSync(path.join(process.cwd(),"questions"))) {
     // Reading all question sets
     const questionSet = JSON.parse(
-      fs.readFileSync(`${questionDir}/${file}`, "utf-8"),
+      fs.readFileSync(path.join(process.cwd(),`${questionDir}`,`${file}`), "utf-8"),
     );
     // Random matching
     for (const question of questionSet.questions) {
