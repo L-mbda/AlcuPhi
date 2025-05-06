@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertCircle, Eye, EyeOff } from "lucide-react"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import Link from "next/link"
 
 interface AuthFormProps {
   isRegister: boolean
@@ -195,6 +196,16 @@ export function AuthForm({ isRegister: initialIsRegister, message, loginAction, 
             </div>
 
             <div className="pt-2 animate-slideUp" style={{ animationDelay: "300ms" }}>
+              {
+                isRegister ? (
+                  <>
+                    <p className="text-[12.5px]">
+                      <span>By registering, you're agreeing to the </span> <Link href={'/terms'} className="hover:underline text-gray-400 hover:text-blue-300 transition-all">Terms of Service</Link><span>, and the </span><Link href={'/privacy'} className="hover:underline text-gray-400 hover:text-blue-300 transition-all">Privacy Policy</Link>
+                    </p>
+                    <br />
+                  </>
+                ) : null
+              }
               <SubmitButton />
             </div>
           </form>

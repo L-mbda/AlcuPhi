@@ -42,7 +42,7 @@ export default async function RootLayout({
               <Settings className="h-5 w-5" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" title="Logout">
+          <Button variant="ghost" size="icon" title="Logout" asChild>
             <Link href="/logout">
               <LogOut className="h-5 w-5" />
             </Link>
