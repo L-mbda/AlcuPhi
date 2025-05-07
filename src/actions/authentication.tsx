@@ -28,7 +28,15 @@ export class Authentication {
       .createHash("sha3-512")
       .update(salt1 + password + salt2)
       .digest("hex");
-    if ((await (await db()).select().from(user)).length != 0) {
+    if ((await (await db()).select().from(user)).length != 0 && (
+      await (
+        await db()
+      )
+        .select()
+        .from(user)
+        // @ts-expect-error because of there being email, ofc it would raise
+        .where(eq(data.get("email"), user.email)).length == 0
+    )) {
       await (await db()).insert(user).values({
         name: data.get("name"),
         password: password,
