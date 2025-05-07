@@ -5,6 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 export const metadata: Metadata = {
   title: "AlcuPhi",
   description: "An adaptive learning platform for us Physicists ⚛",
+  
 };
 
 export default function RootLayout({

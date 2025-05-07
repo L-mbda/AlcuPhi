@@ -2,7 +2,7 @@ import { db } from "@/db/db";
 import { question, questionCollection, questionLog } from "@/db/schema";
 import { fetchQuestion, generateQuestion } from "@/lib/questions/q";
 import { getSessionData } from "@/lib/session";
-import { and, asc, count, desc, eq, gt, lt, sql } from "drizzle-orm";
+import { and, count, desc, eq, gt, lt, sql } from "drizzle-orm";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
@@ -291,22 +291,28 @@ export async function PATCH(request: NextRequest) {
         } else {
             // Else get from question sets and then if add if answer method isnt mcq
             const question = fetchQuestion(data.questionID);
+            // @ts-expect-error Expect this errors
             if (question.answerMethod != 'multipleChoice') {
                 await connection.insert(questionLog).values({
                     // @ts-expect-error Expecting lmao
                     'questionSet': question.id.split('.')[1],
+                    // @ts-expect-error Expect this errors
                     'questionSetID': question.id,
+                    // @ts-expect-error Expect this errors
                     'correct': data.response === question.answer,
                     'response': data.response,
                     'userID': session.credentials?.id,
                     'timestamp': (new Date()).getTime(),
                 })
+                // @ts-expect-error Expect this errors
                 return NextResponse.json({"message": "success", "correctAnswer": [question.answer]})
             } else {
                 await connection.insert(questionLog).values({
                     // @ts-expect-error Expecting lmao
                     'questionSet': question.id.split('.')[1],
+                    // @ts-expect-error Expect this errors
                     'questionSetID': question.id,
+                    // @ts-expect-error Expect this errors
                     'correct': data.response === question.answer,
                     'response': data.response,
                     'userID': session.credentials?.id,
@@ -316,6 +322,7 @@ export async function PATCH(request: NextRequest) {
                 })
                 // Else
                 return NextResponse.json({"message": "success",
+                // @ts-expect-error Expect this errors
                 "correctAnswer": question.answer, 'correct': question.answer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),})
             }
         }
