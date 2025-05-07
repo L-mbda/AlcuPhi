@@ -30,7 +30,6 @@ export class Authentication {
       .digest("hex");
     if ((await (await db()).select().from(user)).length != 0) {
       await (await db()).insert(user).values({
-        // @ts-expect-error I would say expect because overload issues lmao
         name: data.get("name"),
         password: password,
         salt1: salt1,
@@ -50,7 +49,6 @@ export class Authentication {
       ).length == 0
     ) {
       await (await db()).insert(user).values({
-        // @ts-expect-error I would say expect because overload issues lmao
         name: data.get("name"),
         password: password,
         salt1: salt1,
@@ -110,7 +108,6 @@ export class Authentication {
           .update(crypto.randomBytes(200).toString("hex"))
           .digest("hex");
         await (await db()).insert(session).values({
-          // @ts-expect-error because it is expiration, expect
           expirationTime: new Date(
             new Date().getTime() / 1000 + 60 * 60 * 24,
           ).getTime(),
@@ -177,7 +174,6 @@ export class Authentication {
             active: user.active
           })
           .from(user)
-          // @ts-expect-error since it is a file that needs it because of the eq() operator.
           .where(eq(user.id, sessionID[0].userID));
         if (userAccount.length != 0 && (userAccount[0].active == 'active' || userAccount[0].active == null)) {
           return { action: "continue", credentials: userAccount[0] };

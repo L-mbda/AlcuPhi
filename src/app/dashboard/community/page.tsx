@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { CreateSetButton } from "@/lib/create-set-button";
 import { CommunitySection } from "@/lib/menu";
 import { getSessionData } from "@/lib/session";
-import { SplashScreen } from "@/lib/ui";
-import { LogOut, Settings } from "lucide-react";
 import Link from "next/link";
 
 // Dashboard

@@ -54,7 +54,6 @@ export default async function PlaySet({ params }: { params: Promise<{ id: string
       attempts: count(questionLog.id),
     })
     .from(questionLog)
-    // @ts-expect-error We should expect this to occur
     .where(and(eq(questionLog.collectionID, setID[0].id), eq(questionLog.userID, session.id)))
   const accuracy = totalQuestions > 0 ? Math.round((questionsCorrect / totalQuestions) * 100) : 0
 

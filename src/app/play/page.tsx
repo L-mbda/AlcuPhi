@@ -55,7 +55,6 @@ export default async function Play() {
     .from(questionLog)
     .where(and(
       eq(questionLog.questionSet, focus),  
-      // @ts-expect-error We should expect this to occur
       eq(questionLog.userID, session.id)))
   const accuracy = totalQuestions > 0 ? Math.round((questionsCorrect / totalQuestions) * 100) : 0
 

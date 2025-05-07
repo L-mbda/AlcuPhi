@@ -15,7 +15,6 @@ export async function PUT(data: NextRequest) {
             'salt1': user.salt1,
             'salt2': user.salt2,
             'password': user.password
-        // @ts-expect-error Expecting because it's expectd
         }).from(user).where(eq(user.id, token.credentials?.id))
         if (userInfo.length != 1) {
             return NextResponse.json({
@@ -70,7 +69,6 @@ export async function PUT(data: NextRequest) {
             'salt1': salt1,
             'salt2': salt2,
             'password': password,
-        // @ts-expect-error Expect this little trick
         }).where(eq(user.id, token.credentials?.id))
         return NextResponse.json({
             'message': 'Process succeeded'

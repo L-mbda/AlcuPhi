@@ -20,7 +20,6 @@ export default async function Suspended() {
         <p className="text-zinc-200 leading-relaxed">
           Your account has been suspended from <span className="font-['STIX'] font-extrabold">alcuφ</span> due to potential rule
           violations. If you believe this is a mistake or would like to appeal,
-          {/* @ts-expect-error Expected */}
           please reach out to our support team <Link className="text-underline text-blue-300" href={'mailto:support@alcuphi.me?subject=Appeal%20for%20AlcuPhi%20Account%20' + session?.credentials.id}>here</Link>.
         </p>
         <div className="flex justify-center gap-4">
