@@ -17,7 +17,6 @@ export async function GET(request: NextRequest) {
     )
       .select()
       .from(questionLog)
-      // @ts-expect-error Expected because of token.credentials.id
       .where(eq(questionLog.userID, token.credentials.id))
       // Order by timestamp
       .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`))
@@ -38,7 +37,6 @@ export async function POST(request: NextRequest) {
     if (data.type == "REQUEST") {
       const question = generateQuestion("*", "ipho");
       console.log(question);
-      // @ts-expect-error Expected because of question
       if (question.id.startsWith("qset.")) {
         return NextResponse.json({
           question: question,
@@ -53,10 +51,10 @@ export async function POST(request: NextRequest) {
       // Check if the question exists and is correct, if it is, then return a success message
 
       if (question !== undefined) {
+        // @ts-expect-error Expected since there'll be "mismatch"
         if (question.answer == data.response) {
           // Update log
           await (await db()).insert(questionLog).values({
-            // @ts-expect-error Expected since there'll be "mismatch"
             correct: true,
             question: question.id.toString(),
             userID: token.credentials?.id,
@@ -72,7 +70,6 @@ export async function POST(request: NextRequest) {
         } else {
           // Update log and return incorrect
           await (await db()).insert(questionLog).values({
-            // @ts-expect-error Expected since there'll be "mismatch"
             correct: false,
             question: question.id.toString(),
             userID: token.credentials?.id,
@@ -83,6 +80,7 @@ export async function POST(request: NextRequest) {
             {
               message: "Incorrect",
               correct: false,
+              // @ts-expect-error Expecting this error
               correctAnswer: question.answer,
             },
             {
@@ -121,7 +119,6 @@ export async function POST(request: NextRequest) {
           'correctAnswer': question.correctAnswer,
           'response': questionLog.response
         }).from(questionLog).where(and(
-          // @ts-expect-error We should expect this to occur
           eq(questionLog.userID, token.credentials?.id),
           eq(questionLog.collectionID, set[0].id),
         ))
@@ -138,13 +135,11 @@ export async function POST(request: NextRequest) {
         // Make db query
         const newInfo = await connection.select().from(questionLog).where(and(
           eq(questionLog.questionSet, data.collectionID),
-          // @ts-expect-error Expecting lmao
           eq(questionLog.userID, token.credentials?.id)
         ))
         .orderBy(desc(sql`CAST(${questionLog.timestamp} AS BIGINT)`)).limit(data.limit);
         // For
         for (let i = 0; i < newInfo.length;i++) {
-          // @ts-expect-error Expecting since its a bit diverse
           const query = fetchQuestion(newInfo[i].questionSetID)
           if (query != null) {
             if (query.answerMethod == 'multipleChoice') {
@@ -154,6 +149,7 @@ export async function POST(request: NextRequest) {
                 'correct': newInfo[i].correct,
                 'timestamp': newInfo[i].timestamp,
                 'type': query.answerMethod,
+                // @ts-expect-error Expecting
                 'correctAnswer': query.answer,
                 'answerChoices': query.answerChoices
                 // 'logInfo': 
@@ -165,6 +161,7 @@ export async function POST(request: NextRequest) {
                 'correct': newInfo[i].correct,
                 'timestamp': newInfo[i].timestamp,
                 'type': query.answerMethod,
+                // @ts-expect-error Expecting
                 'correctAnswer': [query.answer],
                 'answerChoices': []
                 // 'logInfo': 

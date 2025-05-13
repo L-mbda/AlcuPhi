@@ -10,7 +10,6 @@ export async function DELETE(request: NextRequest) {
     const data = await request.json();
     const token = await getSessionData();
     if (data.password != undefined && token.action == 'continue') {
-        // @ts-expect-error Expecting since we know
         const credentials = await connection.select().from(user).where(eq(user.id, token.credentials?.id))
         // Check password
         let password = crypto
@@ -40,27 +39,20 @@ export async function DELETE(request: NextRequest) {
             // Check and transfer to system as needed
             await connection.update(questionCollection).set({
                 'creatorID': systemquery[0].id
-            // @ts-expect-error I know this would occur
             }).where(eq(questionCollection.creatorID, token.credentials?.id))
-            // @ts-expect-error Expecting again
             await connection.delete(session).where(eq(session.userID, token.credentials?.id));
-            // @ts-expect-error Expecting again
             await connection.delete(user).where(eq(user.id, token.credentials?.id));
 
             // Check and transfer to system as needed
             await connection.update(questionCollection).set({
                 'creatorID': systemquery[0].id
-            // @ts-expect-error Expecting again
             }).where(eq(questionCollection.creatorID, token.credentials?.id))
             // Check and transfer to system as needed
             await connection.delete(questionLog)
-            // @ts-expect-error Expecting again
             .where(eq(questionLog.userID, token.credentials?.id))
             // Delete session
-            // @ts-expect-error Expecting again
             await connection.delete(session).where(eq(session.userID, token.credentials?.id));
             // Delete account
-            // @ts-expect-error Expecting again
             await connection.delete(user).where(eq(user.id, token.credentials?.id));
 
             // Return response

@@ -24,7 +24,6 @@ export async function POST(request: NextRequest) {
         // Define info
         const questionSetCount = await (connection).select({
             'totalAnswers': count(questionLog.correct),            
-        // @ts-expect-error We should expect this to occur
         }).from(questionLog).where(and(eq(questionLog.collectionID, setInformation[0].id), eq(questionLog.userID, session.credentials?.id)))
         .leftJoin(question, eq(questionLog.questionID, sql`CAST(${question.id} as varchar)`))
         // .groupBy(sql`
@@ -36,7 +35,6 @@ export async function POST(request: NextRequest) {
         //   `);
         const questionSetCorrect = await (connection).select({
             'correctAnswers': count(questionLog.correct),            
-        // @ts-expect-error We should expect this to occur
         }).from(questionLog).where(and(eq(questionLog.collectionID, setInformation[0].id), eq(questionLog.userID, session.credentials?.id), eq(questionLog.correct, true)))
         .leftJoin(question, eq(questionLog.questionID, sql`CAST(${question.id} as varchar)`))
         .groupBy(sql`
@@ -73,7 +71,6 @@ export async function POST(request: NextRequest) {
             'id': question.id,
             'difficulty': question.difficulty
           }).from(questionLog).where(and(
-            // @ts-expect-error We should expect this to occur
             eq(questionLog.userID, session.credentials?.id),
             eq(questionLog.collectionID, setInformation[0].id),
           ))
@@ -101,7 +98,6 @@ export async function POST(request: NextRequest) {
             const weight = 0.6
             const accuracy = ((1.0*questionSetCorrect[0].correctAnswers)/questionSetCount[0].totalAnswers)
             const abilityEstimate = weight * accuracy + (1-weight) * (query[0].correct ? 1 : 0)
-            // @ts-expect-error We know that this would occur anyways
             const nextDifficulty = (query[0].difficulty + 3 * (abilityEstimate - 0.6)) * 10     
             if (Math.max(0, Math.min(10, nextDifficulty)) > 7) {
                 // Generate questions and grab a random one
@@ -182,20 +178,17 @@ export async function POST(request: NextRequest) {
         } else {
             const questionSetCorrect = await connection.select({'correctAnswers': count(questionLog.correct)}).from(questionLog)
             .where(and(
-                // @ts-expect-error Expecting
                 eq(session.credentials?.id, questionLog.userID),
                 eq(questionLog.correct, true),
                 eq(questionLog.questionSet, data.setID),
             ))
             const questionSetCount = await connection.select({'totalAnswers': count(questionLog.correct)}).from(questionLog)
             .where(and(
-                // @ts-expect-error Expecting
                 eq(session.credentials?.id, questionLog.userID),
                 eq(questionLog.questionSet, data.setID),
             ))
             const recentQuestion = await connection.select().from(questionLog)
             .where(and(
-                // @ts-expect-error Expecting
                 eq(session.credentials?.id, questionLog.userID),
                 eq(questionLog.questionSet, data.setID),
             ))
@@ -246,13 +239,11 @@ export async function PATCH(request: NextRequest) {
             }
             const collectionData = await connection.select().from(questionCollection).where(eq(questionCollection.id, questions[0].collectionID))
             await connection.update(questionCollection).set({
-                // @ts-expect-error Eexpected lmao
                 'plays': collectionData[0].plays + 1
             }).where(eq(questionCollection.id, collectionData[0].id))
             // Continue
             if (questions[0].type != 'multipleChoice') {
                 await connection.insert(questionLog).values({
-                    // @ts-expect-error We should expect this to occur
                     'userID': session.credentials?.id,
                     'correct': true,
                     'response': data.response,
@@ -263,7 +254,6 @@ export async function PATCH(request: NextRequest) {
                 return NextResponse.json({"message": "success", "correctAnswer": questions[0].correctAnswer})
             } else {
                 await connection.insert(questionLog).values({
-                    // @ts-expect-error We should expect this to occur
                     'userID': session.credentials?.id,
                     'correct': questions[0].correctAnswer.includes(('option-' + (parseInt(data.response.split('-')[1]) + 1))),
                     'response': data.response,
@@ -274,11 +264,9 @@ export async function PATCH(request: NextRequest) {
                 // Check logs
                 const questionLogs = await connection.select({
                     totalAttempts: count(questionLog.timestamp)
-                // @ts-expect-error Expected
                 }).from(questionLog).where(eq(questionLog.questionID,questions[0].id));
                 const correctLogs = await connection.select({
                     correct: count(questionLog.correct)
-                // @ts-expect-error Expected
                 }).from(questionLog).where(and(eq(questionLog.questionID,questions[0].id), eq(questionLog.correct, true)));
                 // Update question difficulty regardless of any action
                 await connection.update(question).set({
@@ -291,7 +279,7 @@ export async function PATCH(request: NextRequest) {
         } else {
             // Else get from question sets and then if add if answer method isnt mcq
             const question = fetchQuestion(data.questionID);
-            // @ts-expect-error Expect this errors
+            // @ts-expect-error
             if (question.answerMethod != 'multipleChoice') {
                 await connection.insert(questionLog).values({
                     // @ts-expect-error Expecting lmao
@@ -304,7 +292,7 @@ export async function PATCH(request: NextRequest) {
                     'userID': session.credentials?.id,
                     'timestamp': (new Date()).getTime(),
                 })
-                // @ts-expect-error Expect this errors
+                // @ts-expect-error
                 return NextResponse.json({"message": "success", "correctAnswer": [question.answer]})
             } else {
                 await connection.insert(questionLog).values({

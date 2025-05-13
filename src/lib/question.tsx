@@ -22,7 +22,7 @@ interface Question {
   correctAnswer?: string // For free response questions
 }
 
-function ZoomableImage({
+export function ZoomableImage({
   src,
   alt,
   className,
@@ -35,12 +35,13 @@ function ZoomableImage({
   width?: number
   height?: number
 }) {
-  const [isOpen, setIsOpen] = useState(false);
-  const [zoomLevel, setZoomLevel] = useState(1);
+  const [isOpen, setIsOpen] = useState(false)
+  const [zoomLevel, setZoomLevel] = useState(1)
 
-  const handleZoom = () => {
-    setZoomLevel(prev => (prev === 1 ? 2 : 1));
-  };
+  const handleZoom = (e: React.MouseEvent) => {
+    e.stopPropagation()         // stop overlay‐close when you actually click to zoom
+    setZoomLevel(prev => (prev === 1 ? 2 : 1))
+  }
 
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
@@ -53,19 +54,24 @@ function ZoomableImage({
           height={height}
         />
       </DialogTrigger>
-      <DialogContent 
-        className="w-screen h-screen max-w-none border-0 bg-black/90 p-0 cursor-zoom-out" 
-        onClick={() => setIsOpen(false)}
-        onInteractOutside={(e) => e.preventDefault()}
+
+      <DialogContent
+        className="w-screen h-screen max-w-none border-0 bg-black/90 p-0 cursor-zoom-out"
+        onClick={() => {
+          setZoomLevel(1)  // reset zoom when closing
+          setIsOpen(false)
+        }}
+        // remove onInteractOutside—DialogContent now closes on any outside click
       >
-        <div 
-          className="relative h-full w-full flex items-center justify-center"
-          onClick={(e) => e.stopPropagation()}
+        {/* Wrapper takes up full screen but doesn’t catch pointer events */}
+        <div
+          className="relative h-full w-full flex items-center justify-center pointer-events-none"
         >
-          <img 
-            src={src} 
-            alt={alt} 
-            className="object-contain transition-transform duration-300"
+          {/* Image itself re‐enables pointer events */}
+          <img
+            src={src}
+            alt={alt}
+            className="object-contain transition-transform duration-300 pointer-events-auto"
             style={{
               transform: `scale(${zoomLevel})`,
               maxHeight: '90vh',
@@ -77,9 +83,8 @@ function ZoomableImage({
         </div>
       </DialogContent>
     </Dialog>
-  );
+  )
 }
-
 
 export function QuestionSection({ communityID, intent }: { communityID: string | undefined, intent: number }) {
   const [question, setQuestion] = useState<Question>()
