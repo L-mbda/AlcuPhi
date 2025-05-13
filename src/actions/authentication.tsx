@@ -28,16 +28,17 @@ export class Authentication {
       .createHash("sha3-512")
       .update(salt1 + password + salt2)
       .digest("hex");
-    if ((await (await db()).select().from(user)).length != 0 && (
+    const connection = await db();
+    if ((await (connection).select().from(user)).length != 0 && (
       await (
-        await db()
+        connection
       )
         .select()
         .from(user)
         // @ts-expect-error because of there being email, ofc it would raise
         .where(eq(data.get("email"), user.email)).length == 0
     )) {
-      await (await db()).insert(user).values({
+      await (connection).insert(user).values({
         name: data.get("name"),
         password: password,
         salt1: salt1,
@@ -48,7 +49,7 @@ export class Authentication {
     } else if (
       (
         await (
-          await db()
+          connection
         )
           .select()
           .from(user)
@@ -56,7 +57,7 @@ export class Authentication {
           .where(eq(data.get("email"), user.email))
       ).length == 0
     ) {
-      await (await db()).insert(user).values({
+      await (connection).insert(user).values({
         name: data.get("name"),
         password: password,
         salt1: salt1,
@@ -78,12 +79,13 @@ export class Authentication {
   public static async login(formData: FormData) {
     "use server";
     // Grab formData
+    const connection = await db();
     const data = formData;
     // Self explanatory code that checks the database using our primary key of username and email
     if (
       (
         await (
-          await db()
+          connection
         )
           .select()
           .from(user)
@@ -93,7 +95,7 @@ export class Authentication {
     ) {
       // User
       const credentials = await (
-        await db()
+        connection
       )
         .select()
         .from(user)
@@ -115,7 +117,12 @@ export class Authentication {
           .createHash("sha3-512")
           .update(crypto.randomBytes(200).toString("hex"))
           .digest("hex");
-        await (await db()).insert(session).values({
+
+        await connection.update(user).set({
+          loginCount: credentials[0].loginCount + 1
+        }).where(eq(user.id, credentials[0].id))
+          
+        await (connection).insert(session).values({
           expirationTime: new Date(
             new Date().getTime() / 1000 + 60 * 60 * 24,
           ).getTime(),
@@ -123,6 +130,7 @@ export class Authentication {
           token: crypto.createHash("sha3-512").update(identity).digest("hex"),
           expired: false,
         });
+
         // TODO: SET ID TO WORK WITH A DATABASE TABLE
         const token = await new jwt.SignJWT({ info: identity })
           .setAudience("hyperion-c3")
@@ -143,6 +151,7 @@ export class Authentication {
     Static raster authentication verification
   */
   public static async verifySession() {
+    const connection = await db();
     // setting cookies
     const token = (await cookies()).get("header");
     if (token !== undefined) {
@@ -156,7 +165,7 @@ export class Authentication {
         );
         // Session ID
         const sessionID = await (
-          await db()
+          connection
         )
           .select()
           .from(session)
@@ -172,14 +181,16 @@ export class Authentication {
           );
         // Get user account
         const userAccount = await (
-          await db()
+          connection
         )
           .select({
             email: user.email,
             role: user.role,
             name: user.name,
             id: user.id,
-            active: user.active
+            active: user.active,
+            dateCreated: user.dateCreated,
+            loginCount: user.loginCount,
           })
           .from(user)
           .where(eq(user.id, sessionID[0].userID));

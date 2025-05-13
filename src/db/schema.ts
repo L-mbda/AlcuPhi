@@ -4,6 +4,7 @@ import {
   varchar,
   doublePrecision,
   bigint,
+  date,
 } from "drizzle-orm/pg-core";
 import { sql } from "drizzle-orm";
 
@@ -16,7 +17,9 @@ export const user = pgTable("users", {
   salt1: varchar({ length: 512 }),
   salt2: varchar({ length: 512 }),
   role: varchar({ enum: ["owner", "admin", "user"] }),
-  active: varchar({enum: ['active', 'suspended']}).default("active")
+  active: varchar({enum: ['active', 'suspended']}).default("active"),
+  dateCreated: date().default(new Date().toDateString()),
+  loginCount: bigint({mode: "number"}).default(0),
 });
 
 // Session :)
