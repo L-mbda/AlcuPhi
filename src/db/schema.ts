@@ -70,7 +70,7 @@ export const question = pgTable("question", {
     .notNull()
     .references(() => questionCollection.id),
   type: varchar({ length: 256 }),
-  questionName: varchar({ length: 256 }),
+  questionName: varchar({ length: 4096 }),
   difficulty: doublePrecision(),
   questionCollectionTagName: varchar()
     .array()
@@ -80,7 +80,7 @@ export const question = pgTable("question", {
     .array()
     .notNull()
     .default(sql`'{}'::varchar[]`),
-  correctAnswer: varchar()
+  correctAnswer: varchar({length: 4096})
   .array()
   .notNull()
   .default(sql`'{}'::varchar[]`),
@@ -97,3 +97,10 @@ export const analytics = pgTable("analytics", {
   tagName: varchar(),
   score: bigint({ mode: "number" }),
 });
+
+// export const explanations = pgTable("explanations", {
+//   id: bigint({mode: "number"}).generatedAlwaysAsIdentity().primaryKey(),
+//   questionCID: bigint({mode: "number"}),
+//   questionID: varchar(),
+//   explanation: varchar(  questionCID: bigint({mode: "number"}))``
+// })

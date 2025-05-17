@@ -1,5 +1,5 @@
 /*
-    Authentication source file for c3
+  Authentication source file for c3
 */
 
 // Libraries
@@ -11,198 +11,206 @@ import { eq } from "drizzle-orm";
 import * as jwt from "jose";
 import { cookies } from "next/headers";
 
-// Authentication Class for beautiful authentication
 export class Authentication {
   // Function to register
   public static async register(formData: FormData) {
     "use server";
     const data = formData;
+    const name = String(data.get("name"));
+    const email = String(data.get("email"));
+    const rawPassword = String(data.get("password"));
+
     // Create the salting variables
     const salt1 = crypto.randomBytes(256).toString("hex");
     const salt2 = crypto.randomBytes(256).toString("hex");
-    let password = await crypto
+
+    // First hash (sha3-256), then salted double-hash (sha3-512)
+    let password = crypto
       .createHash("sha3-256")
-      .update(data.get("password") + "")
+      .update(rawPassword)
       .digest("hex");
-    password = await crypto
+    password = crypto
       .createHash("sha3-512")
       .update(salt1 + password + salt2)
       .digest("hex");
+
     const connection = await db();
-    if ((await (connection).select().from(user)).length != 0 && (
-      await (
-        connection
-      )
+
+    // Fetch all existing users and check if this email is already in use
+    const allUsers = await connection.select().from(user);
+    const emailExists = (
+      await connection
         .select()
         .from(user)
-        // @ts-expect-error because of there being email, ofc it would raise
-        .where(eq(data.get("email"), user.email)).length == 0
-    )) {
-      await (connection).insert(user).values({
-        name: data.get("name"),
-        password: password,
-        salt1: salt1,
-        salt2: salt2,
-        email: data.get("email"),
-        role: "user",
-      });
-    } else if (
-      (
-        await (
-          connection
-        )
-          .select()
-          .from(user)
-          // @ts-expect-error because of there being email, ofc it would raise
-          .where(eq(data.get("email"), user.email))
-      ).length == 0
-    ) {
-      await (connection).insert(user).values({
-        name: data.get("name"),
-        password: password,
-        salt1: salt1,
-        salt2: salt2,
-        email: data.get("email"),
+        .where(eq(user.email, email))
+    ).length > 0;
+
+    if (allUsers.length === 0) {
+      // First-ever signup → owner
+      await connection.insert(user).values({
+        name,
+        password,
+        salt1,
+        salt2,
+        email,
         role: "owner",
       });
+    } else if (!emailExists) {
+      // Subsequent signup with a new email → normal user
+      await connection.insert(user).values({
+        name,
+        password,
+        salt1,
+        salt2,
+        email,
+        role: "user",
+      });
     } else {
-      return redirect(
-        "/account?action=register&message=Email is already used.",
-      );
+      // Email already in use
+      return redirect("/account?action=register&message=Email is already used.");
     }
+
     return redirect("/account");
   }
 
   /*
-        Beautiful login function for beautiful people
-    */
+    Beautiful login function for beautiful people
+  */
   public static async login(formData: FormData) {
     "use server";
-    // Grab formData
-    const connection = await db();
     const data = formData;
-    // Self explanatory code that checks the database using our primary key of username and email
-    if (
-      (
-        await (
-          connection
-        )
-          .select()
-          .from(user)
-          // @ts-expect-error always causes issues that we can't solve with equals
-          .where(eq(user.email, data.get("email")))
-      ).length > 0
-    ) {
-      // User
-      const credentials = await (
-        connection
-      )
-        .select()
-        .from(user)
-        // @ts-expect-error always causes issues that we can't solve with equals
-        .where(eq(user.email, data.get("email")));
-      // Password generation
-      let password = crypto
-        .createHash("sha3-256")
-        .update(data.get("password") + "")
-        .digest("hex");
-      password = crypto
-        .createHash("sha3-512")
-        .update(credentials[0].salt1 + password + credentials[0].salt2)
-        .digest("hex");
-      // Validation and login
-      if (password == credentials[0].password) {
-        // Create ID
-        const identity = crypto
-          .createHash("sha3-512")
-          .update(crypto.randomBytes(200).toString("hex"))
-          .digest("hex");
+    const email = String(data.get("email"));
+    const rawPassword = String(data.get("password"));
+    const connection = await db();
 
-        await connection.update(user).set({
-          loginCount: credentials[0].loginCount + 1
-        }).where(eq(user.id, credentials[0].id))
-          
-        await (connection).insert(session).values({
-          expirationTime: new Date(
-            new Date().getTime() / 1000 + 60 * 60 * 24,
-          ).getTime(),
-          userID: credentials[0].id,
-          token: crypto.createHash("sha3-512").update(identity).digest("hex"),
-          expired: false,
-        });
+    // Look up user by email
+    const creds = await connection
+      .select()
+      .from(user)
+      .where(eq(user.email, email));
 
-        // TODO: SET ID TO WORK WITH A DATABASE TABLE
-        const token = await new jwt.SignJWT({ info: identity })
-          .setAudience("hyperion-c3")
-          .setProtectedHeader({ alg: "HS256" })
-          .setExpirationTime("1d")
-          // @ts-expect-error will always raise about JWT
-          .sign(crypto.createSecretKey(process.env?.JWT_SECRET, "utf-8"));
-        (await cookies()).set("header", token, { sameSite: "strict" });
-        // Redirect to dashboard
-        return redirect("/dashboard");
-      }
+    if (creds.length === 0) {
       return redirect("/account?message=Incorrect email or password.");
     }
-    return redirect("/account?message=Incorrect email or password.");
+
+    // Recompute password hash with stored salts
+    let password = crypto
+      .createHash("sha3-256")
+      .update(rawPassword)
+      .digest("hex");
+    password = crypto
+      .createHash("sha3-512")
+      .update(creds[0].salt1 + password + creds[0].salt2)
+      .digest("hex");
+
+    if (password !== creds[0].password) {
+      return redirect("/account?message=Incorrect email or password.");
+    }
+
+    // Password OK → bump login count
+    await connection
+      .update(user)
+      .set({ loginCount: creds[0].loginCount + 1 })
+      .where(eq(user.id, creds[0].id));
+
+    // Create a random session identity, store in DB
+    const identity = crypto
+      .createHash("sha3-512")
+      .update(crypto.randomBytes(200).toString("hex"))
+      .digest("hex");
+
+    const tokenHash = crypto
+      .createHash("sha3-512")
+      .update(identity)
+      .digest("hex");
+
+    await connection.insert(session).values({
+      userID: creds[0].id,
+      token: tokenHash,
+      expirationTime: Date.now() + 24 * 60 * 60 * 1000, // 24h from now
+      expired: false,
+    });
+
+    // Issue a signed JWT carrying the raw identity
+    const token = await new jwt.SignJWT({ info: identity })
+      .setAudience("hyperion-c3")
+      .setProtectedHeader({ alg: "HS256" })
+      .setExpirationTime("1d")
+      .sign(
+        crypto.createSecretKey(
+          Buffer.from(process.env.JWT_SECRET!, "utf-8")
+        )
+      );
+
+    // Set cookie
+    (await cookies()).set("header", token, { sameSite: "strict" });
+
+    return redirect("/dashboard");
   }
 
   /*
-    Static raster authentication verification
+    Stateless session verification
   */
   public static async verifySession() {
     const connection = await db();
-    // setting cookies
-    const token = (await cookies()).get("header");
-    if (token !== undefined) {
-      try {
-        // Superimported from /L-mbda/Theta
-        // Verification of the token utilizing the secret key and stuff
-        const jwtVerification = await jwt.jwtVerify(
-          token.value,
-          // @ts-expect-error Error is expected since we have crypto.createSecretKey
-          crypto.createSecretKey(process.env?.JWT_SECRET),
-        );
-        // Session ID
-        const sessionID = await (
-          connection
-        )
-          .select()
-          .from(session)
-          .where(
-            eq(
-              session.token,
-              crypto
-                .createHash("sha3-512")
-                // @ts-expect-error expected a we have a payload and eq() always causes errors
-                .update(jwtVerification.payload?.info)
-                .digest("hex"),
-            ),
-          );
-        // Get user account
-        const userAccount = await (
-          connection
-        )
-          .select({
-            email: user.email,
-            role: user.role,
-            name: user.name,
-            id: user.id,
-            active: user.active,
-            dateCreated: user.dateCreated,
-            loginCount: user.loginCount,
-          })
-          .from(user)
-          .where(eq(user.id, sessionID[0].userID));
-        if (userAccount.length != 0 && (userAccount[0].active == 'active' || userAccount[0].active == null)) {
-          return { action: "continue", credentials: userAccount[0] };
-        } else {
-          return {action: "halt", credentials: userAccount[0]}
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    const ck = await cookies();
+    const cookie = ck.get("header");
+    if (!cookie) {
+      return { action: "logout" as const };
     }
-    return { action: "logout" };
+
+    try {
+      // Verify JWT signature & expiration
+      const { payload } = await jwt.jwtVerify(
+        cookie.value,
+        crypto.createSecretKey(Buffer.from(process.env.JWT_SECRET!, "utf-8"))
+      );
+
+      // Re-hash the identity to match session.token
+      const tokenHash = crypto
+        .createHash("sha3-512")
+        .update(String(payload.info))
+        .digest("hex");
+
+      // Look up session
+      const [sess] = await connection
+        .select()
+        .from(session)
+        .where(eq(session.token, tokenHash));
+
+      // Must exist, not marked expired, and not past expirationTime
+      if (!sess || sess.expired || sess.expirationTime < Date.now()) {
+        return { action: "logout" as const };
+      }
+
+      // Fetch user record
+      const [acct] = await connection
+        .select({
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: user.role,
+          active: user.active,
+          dateCreated: user.dateCreated,
+          loginCount: user.loginCount,
+        })
+        .from(user)
+        .where(eq(user.id, sess.userID));
+
+      if (!acct) {
+        return { action: "logout" as const };
+      }
+
+      const ok =
+        acct.active === "active" ||
+        acct.active === null ||
+        acct.active === undefined;
+
+      return ok
+        ? { action: "continue" as const, credentials: acct }
+        : { action: "halt" as const, credentials: acct };
+    } catch {
+      return { action: "logout" as const };
+    }
   }
 }

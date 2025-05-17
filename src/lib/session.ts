@@ -1,34 +1,30 @@
-import { cache } from "react"
-import { Authentication } from "@/actions/authentication"
+// src/session.ts
 
-// Add a TTL (time-to-live) for the cache
-const SESSION_CACHE_TTL = 60 * 1000 // 1 minute in milliseconds
+import { cache } from "react";
+import { Authentication } from "@/actions/authentication";
+import { cookies } from "next/headers";
 
-// In-memory cache for session data
-const sessionCache = new Map<string, { data: any; timestamp: number }>()
+// TTL for cached sessions (1 minute)
+const SESSION_CACHE_TTL = 60 * 1000;
 
-// Enhanced session data retrieval with TTL-based caching
+// In‐memory cache keyed by JWT cookie value
+const sessionCache = new Map<string, { data: any; timestamp: number }>();
+
 export const getSessionData = cache(async () => {
-  // Use a unique key for the current request (could be enhanced with user identifiers)
-  const cacheKey = "current-session"
+  // Derive a per-user cache key from the JWT cookie
+  const ck = await cookies();
+  const token = ck.get("header")?.value ?? "";
+  const cacheKey = `session:${token}`;
 
-  // Check if we have a valid cached session
-  const cachedSession = sessionCache.get(cacheKey)
-  const now = Date.now()
-
-  if (cachedSession && now - cachedSession.timestamp < SESSION_CACHE_TTL) {
-    // Return cached data if it's still valid
-    return cachedSession.data
+  const now = Date.now();
+  const cached = sessionCache.get(cacheKey);
+  if (cached && now - cached.timestamp < SESSION_CACHE_TTL) {
+    return cached.data;
   }
 
   // Otherwise fetch fresh session data
-  const sessionData = await Authentication.verifySession()
+  const sessionData = await Authentication.verifySession();
 
-  // Update the cache
-  sessionCache.set(cacheKey, {
-    data: sessionData,
-    timestamp: now,
-  })
-
-  return sessionData
-})
+  sessionCache.set(cacheKey, { data: sessionData, timestamp: now });
+  return sessionData;
+});
