@@ -98,9 +98,9 @@ export const analytics = pgTable("analytics", {
   score: bigint({ mode: "number" }),
 });
 
-// export const explanations = pgTable("explanations", {
-//   id: bigint({mode: "number"}).generatedAlwaysAsIdentity().primaryKey(),
-//   questionCID: bigint({mode: "number"}),
-//   questionID: varchar(),
-//   explanation: varchar(  questionCID: bigint({mode: "number"}))``
-// })
+// AI Explanations
+export const explanations = pgTable("explanations", {
+  id: bigint({mode: "number"}).generatedAlwaysAsIdentity().primaryKey(),
+  seed: varchar({length: 256}),
+  explanation: varchar({length: 3000}),
+})
