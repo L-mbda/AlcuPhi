@@ -96,7 +96,10 @@ export async function POST(request: NextRequest) {
             */
             //    Ability estimate
             const weight = 0.6
-            const accuracy = ((1.0*questionSetCorrect[0].correctAnswers)/questionSetCount[0].totalAnswers)
+            let accuracy = 0
+            if (questionSetCorrect[0] != undefined) {
+                accuracy = ((1.0*(questionSetCorrect[0].correctAnswers))/questionSetCount[0].totalAnswers)
+            }
             const abilityEstimate = weight * accuracy + (1-weight) * (query[0].correct ? 1 : 0)
             const nextDifficulty = (query[0].difficulty + 3 * (abilityEstimate - 0.6)) * 10     
             if (Math.max(0, Math.min(10, nextDifficulty)) > 7) {
